@@ -79,6 +79,8 @@ class LinkedList:
             prev_node.next = node.next
             if prev_node.next is None:
                 self.tail = prev_node
+        if self.tail == node:
+            self.tail = prev_node
         node.next = None
         return prev_node.next if prev_node else self.head
 
@@ -96,6 +98,7 @@ class LinkedList:
             new_head = self.head.next
             self.head.next = None
             self.head = new_head
+        self.tail = None
 
     def len(self) -> int:
         count = 0
@@ -111,3 +114,5 @@ class LinkedList:
             self.head = new_node
         else:
             after_node.next = new_node
+        if self.tail is None or self.tail == after_node:
+            self.tail = new_node

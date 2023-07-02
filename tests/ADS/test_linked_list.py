@@ -1,8 +1,8 @@
 from lessons.ADS.linked_list import LinkedList, Node
 
 
-def test_delete(setup_instances):
-    instances_list = setup_instances
+def test_delete(setup_instances_to_delete):
+    instances_list = setup_instances_to_delete
     for data, find_value in instances_list:
         values_list = []
         current_node = data.head
@@ -25,9 +25,9 @@ def test_delete(setup_instances):
             assert len(values_list) == (initial_len - 1)
 
 
-def test_delete_multi(setup_instances_multi):
-    instances_list = setup_instances_multi
-    for data, find_value, multi_count in instances_list:
+def test_delete_multi(setup_instances_to_delete_multi):
+    instances_list = setup_instances_to_delete_multi
+    for data, find_value, multi_count, check_head, check_tail in instances_list:
         values_list = []
         current_node = data.head
         while current_node:
@@ -44,6 +44,8 @@ def test_delete_multi(setup_instances_multi):
             current_node = current_node.next
 
         assert len(values_list) == (initial_len - multi_count)
+        assert data.head == check_head
+        assert data.tail == check_tail
 
 
 def test_clean(setup_instances_to_clean):
@@ -65,6 +67,8 @@ def test_clean(setup_instances_to_clean):
             current_node = current_node.next
 
         assert len(values_list) == 0
+        assert data.head is None
+        assert data.tail is None
 
 
 def test_find_all(setup_instances_to_find_all):
@@ -106,7 +110,7 @@ def test_len(setup_instances_to_len):
 
 def test_insert(setup_instances_to_insert):
     instances_list = setup_instances_to_insert
-    for data, after_node in instances_list:
+    for data, after_node, check_head, check_tail in instances_list:
         values_list = []
         current_node = data.head
         while current_node:
@@ -127,3 +131,8 @@ def test_insert(setup_instances_to_insert):
             assert data.head == new_node
         else:
             assert after_node.next == new_node
+
+        check_head = new_node if check_head == "head" else check_head
+        check_tail = new_node if check_tail == "tail" else check_tail
+        assert data.head == check_head
+        assert data.tail == check_tail
