@@ -113,6 +113,24 @@ def setup_instances_to_delete_multi():
     s_list.head = n1
     s_list.tail = n7
     instances_list.append((s_list, 13, 0, n1, n7))
+
+    n1 = Node(121)
+    n2 = Node(12)
+    n3 = Node(12)
+    n4 = Node(12)
+    n5 = Node(12)
+    n6 = Node(12)
+    n7 = Node(12)
+    n1.next = n2
+    n2.next = n3
+    n3.next = n4
+    n4.next = n5
+    n5.next = n6
+    n6.next = n7
+    s_list = LinkedList()
+    s_list.head = n1
+    s_list.tail = n7
+    instances_list.append((s_list, 12, 6, n1, n1))
     return instances_list
 
 

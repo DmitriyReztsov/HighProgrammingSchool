@@ -54,21 +54,14 @@ class LinkedList:
     def _find_with_previous(
         self, val: Any, from_node: Node = None
     ) -> Tuple[Optional[Node]]:
-        node = self.head if from_node is None else from_node
-        if node is None:
-            return None, None
-
-        if node.value == val:
-            return None, node
-
-        next_node = node.next
-        while next_node is not None:
-            if next_node.value == val:
-                return node, next_node
-            node = next_node
-            next_node = next_node.next
-
-        return None, None
+        node = self.head
+        previous_node = None
+        while True:
+            if node.value == val:
+                return previous_node, node
+            previous_node, node = node, node.next
+            if node is None:
+                return None, None
 
     def _delete(self, prev_node: Node, node: Node) -> Optional[Node]:
         if prev_node is None and node is None:
@@ -77,21 +70,18 @@ class LinkedList:
             self.head = node.next
         else:
             prev_node.next = node.next
-            if prev_node.next is None:
-                self.tail = prev_node
         if self.tail == node:
             self.tail = prev_node
         node.next = None
         return prev_node.next if prev_node else self.head
 
     def delete(self, val: Any, all: bool = False) -> None:
-        prev_node, node = self._find_with_previous(val)
-        next_node = self._delete(prev_node, node)
-
-        while all:
+        next_node = self.head
+        while True:
             prev_node, node = self._find_with_previous(val, next_node)
             next_node = self._delete(prev_node, node)
-            all = not (next_node is None)
+            if not (all and next_node is not None):
+                break
 
     def clean(self) -> None:
         while self.head:
