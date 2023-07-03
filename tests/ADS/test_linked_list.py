@@ -28,13 +28,13 @@ def test_delete(setup_instances_to_delete):
 def test_delete_multi(setup_instances_to_delete_multi):
     instances_list = setup_instances_to_delete_multi
     for data, find_value, multi_count, check_head, check_tail in instances_list:
-        values_list = []
+        values_list_init = []
         current_node = data.head
         while current_node:
-            values_list.append(current_node.value)
+            values_list_init.append(current_node.value)
             current_node = current_node.next
 
-        initial_len = len(values_list)
+        initial_len = len(values_list_init)
 
         data.delete(val=find_value, all=True)
         values_list = []
@@ -47,6 +47,8 @@ def test_delete_multi(setup_instances_to_delete_multi):
         assert data.head == check_head
         assert data.tail == check_tail
 
+        after_del_list = [elem for elem in values_list_init if elem != find_value]
+        assert values_list == after_del_list
 
 def test_clean(setup_instances_to_clean):
     instances_list = setup_instances_to_clean

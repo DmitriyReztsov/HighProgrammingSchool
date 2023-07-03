@@ -40,6 +40,39 @@ def setup_instances_to_delete():
 def setup_instances_to_delete_multi():
     instances_list = []
     n1 = Node(12)
+    s_list = LinkedList()
+    s_list.head = n1
+    s_list.tail = n1
+    # list, value to delete, counter of deletion, head, tail
+    instances_list.append((s_list, 12, 1, None, None))
+
+    n1 = Node(12)
+    n2 = Node(12)
+    n1.next = n2
+    s_list = LinkedList()
+    s_list.head = n1
+    s_list.tail = n2
+    instances_list.append((s_list, 12, 2, None, None))
+
+    n1 = Node(12)
+    n2 = Node(55)
+    n1.next = n2
+    s_list = LinkedList()
+    s_list.head = n1
+    s_list.tail = n2
+    instances_list.append((s_list, 55, 1, n1, n1))
+
+    n1 = Node(12)
+    n2 = Node(55)
+    n3 = Node(100)
+    n1.next = n2
+    n2.next = n3
+    s_list = LinkedList()
+    s_list.head = n1
+    s_list.tail = n3
+    instances_list.append((s_list, 12, 1, n2, n3))
+
+    n1 = Node(12)
     n2 = Node(55)
     n3 = Node(100)
     n4 = Node(55)
@@ -131,6 +164,42 @@ def setup_instances_to_delete_multi():
     s_list.head = n1
     s_list.tail = n7
     instances_list.append((s_list, 12, 6, n1, n1))
+
+    n1 = Node(121)
+    n2 = Node(12)
+    n3 = Node(12)
+    n4 = Node(12)
+    n5 = Node(12)
+    n6 = Node(12)
+    n7 = Node(121)
+    n1.next = n2
+    n2.next = n3
+    n3.next = n4
+    n4.next = n5
+    n5.next = n6
+    n6.next = n7
+    s_list = LinkedList()
+    s_list.head = n1
+    s_list.tail = n7
+    instances_list.append((s_list, 12, 5, n1, n7))
+
+    n1 = Node(12)
+    n2 = Node(12)
+    n3 = Node(12)
+    n4 = Node(12)
+    n5 = Node(12)
+    n6 = Node(12)
+    n7 = Node(121)
+    n1.next = n2
+    n2.next = n3
+    n3.next = n4
+    n4.next = n5
+    n5.next = n6
+    n6.next = n7
+    s_list = LinkedList()
+    s_list.head = n1
+    s_list.tail = n7
+    instances_list.append((s_list, 12, 6, n7, n7))
     return instances_list
 
 
