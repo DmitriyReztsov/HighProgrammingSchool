@@ -51,17 +51,15 @@ class LinkedList:
 
         return result_list
 
-    def _find_with_previous(
-        self, val: Any, from_node: Node = None
-    ) -> Tuple[Optional[Node]]:
+    def _find_with_previous(self, val: Any) -> Tuple[Optional[Node]]:
         node = self.head
         previous_node = None
         while True:
+            if node is None:
+                return None, None
             if node.value == val:
                 return previous_node, node
             previous_node, node = node, node.next
-            if node is None:
-                return None, None
 
     def _delete(self, prev_node: Node, node: Node) -> Optional[Node]:
         if prev_node is None and node is None:
@@ -78,7 +76,7 @@ class LinkedList:
     def delete(self, val: Any, all: bool = False) -> None:
         next_node = self.head
         while True:
-            prev_node, node = self._find_with_previous(val, next_node)
+            prev_node, node = self._find_with_previous(val)
             next_node = self._delete(prev_node, node)
             if not (all and next_node is not None):
                 break
