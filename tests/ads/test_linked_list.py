@@ -1,4 +1,4 @@
-from lessons.ADS.linked_list import Node
+from lessons.ads.linked_list import Node
 
 
 def test_delete(setup_instances_to_delete):

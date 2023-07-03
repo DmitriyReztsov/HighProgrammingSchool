@@ -1,4 +1,4 @@
-from lessons.ADS.linked_list import LinkedList, Node
+from lessons.ads.linked_list import LinkedList, Node
 
 
 def sum_list_values(list_1: LinkedList, list_2: LinkedList) -> LinkedList:

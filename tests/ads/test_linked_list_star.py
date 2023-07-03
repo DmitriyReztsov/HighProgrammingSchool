@@ -1,4 +1,4 @@
-from lessons.ADS.linked_list_star import sum_list_values
+from lessons.ads.linked_list_star import sum_list_values
 
 
 def _collect_python_list(l_list):

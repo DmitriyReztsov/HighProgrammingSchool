@@ -1,6 +1,6 @@
 from pytest import fixture
 
-from lessons.ADS.linked_list import LinkedList, Node
+from lessons.ads.linked_list import LinkedList, Node
 
 
 @fixture
