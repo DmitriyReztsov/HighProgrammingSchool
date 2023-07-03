@@ -1,6 +1,6 @@
 from pytest import fixture
 
-from lessons.ADS.linked_list import Node, LinkedList
+from lessons.ADS.linked_list import LinkedList, Node
 
 
 @fixture
@@ -440,4 +440,100 @@ def setup_instances_to_insert():
     s_list.tail = n7
     instances_list.append((s_list, n7, n1, "tail"))
 
+    return instances_list
+
+
+@fixture
+def setup_instances_to_sum_positive():
+    instances_list = []
+    s_list_1 = LinkedList()
+    s_list_2 = LinkedList()
+    instances_list.append((s_list_1, s_list_2))
+
+    n1 = Node(1)
+    s_list_1 = LinkedList()
+    s_list_1.head = n1
+    s_list_1.tail = n1
+
+    n1 = Node(1)
+    s_list_2 = LinkedList()
+    s_list_2.head = n1
+    s_list_2.tail = n1
+    instances_list.append((s_list_1, s_list_2))
+
+    n1 = Node(1)
+    n2 = Node(2)
+    n1.next = n2
+    s_list_1 = LinkedList()
+    s_list_1.head = n1
+    s_list_1.tail = n2
+
+    n1 = Node(1)
+    n2 = Node(2)
+    n1.next = n2
+    s_list_2 = LinkedList()
+    s_list_2.head = n1
+    s_list_2.tail = n2
+    instances_list.append((s_list_1, s_list_2))
+
+    n1 = Node(1)
+    n2 = Node(2)
+    n3 = Node(3)
+    n4 = Node(4)
+    n5 = Node(5)
+    n6 = Node(6)
+    n7 = Node(7)
+    n1.next = n2
+    n2.next = n3
+    n3.next = n4
+    n4.next = n5
+    n5.next = n6
+    n6.next = n7
+    s_list_1 = LinkedList()
+    s_list_1.head = n1
+    s_list_1.tail = n7
+
+    n1 = Node(1)
+    n2 = Node(2)
+    n3 = Node(3)
+    n4 = Node(4)
+    n5 = Node(5)
+    n6 = Node(6)
+    n7 = Node(7)
+    n1.next = n2
+    n2.next = n3
+    n3.next = n4
+    n4.next = n5
+    n5.next = n6
+    n6.next = n7
+    s_list_2 = LinkedList()
+    s_list_2.head = n1
+    s_list_2.tail = n7
+    instances_list.append((s_list_1, s_list_2))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_sum_negative():
+    instances_list = []
+    s_list_1 = LinkedList()
+
+    n1 = Node(1)
+    n2 = Node(2)
+    n3 = Node(3)
+    n4 = Node(4)
+    n5 = Node(5)
+    n6 = Node(6)
+    n7 = Node(7)
+    n1.next = n2
+    n2.next = n3
+    n3.next = n4
+    n4.next = n5
+    n5.next = n6
+    n6.next = n7
+    s_list_2 = LinkedList()
+    s_list_2.head = n1
+    s_list_2.tail = n7
+    instances_list.append((s_list_1, s_list_2))
     return instances_list

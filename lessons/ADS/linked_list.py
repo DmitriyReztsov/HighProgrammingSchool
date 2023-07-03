@@ -74,7 +74,6 @@ class LinkedList:
         return prev_node.next if prev_node else self.head
 
     def delete(self, val: Any, all: bool = False) -> None:
-        # next_node = self.head
         while True:
             prev_node, node = self._find_with_previous(val)
             next_node = self._delete(prev_node, node)

@@ -1,4 +1,4 @@
-from lessons.ADS.linked_list import LinkedList, Node
+from lessons.ADS.linked_list import Node
 
 
 def test_delete(setup_instances_to_delete):
@@ -49,6 +49,7 @@ def test_delete_multi(setup_instances_to_delete_multi):
 
         after_del_list = [elem for elem in values_list_init if elem != find_value]
         assert values_list == after_del_list
+
 
 def test_clean(setup_instances_to_clean):
     instances_list = setup_instances_to_clean
