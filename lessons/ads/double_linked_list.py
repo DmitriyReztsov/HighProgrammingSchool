@@ -12,7 +12,6 @@ class LinkedList2:
     def __init__(self):
         self.head = None
         self.tail = None
-        self.length = 0
 
     def add_in_tail(self, item: Node) -> None:
         if self.head is None:
@@ -23,7 +22,6 @@ class LinkedList2:
             self.tail.next = item
             item.prev = self.tail
         self.tail = item
-        self.length += 1
 
     def find(self, val: Any, from_node: Node = None) -> Optional[Node]:
         node = self.head if from_node is None else from_node
@@ -56,23 +54,27 @@ class LinkedList2:
         else:
             node.next.prev, node.prev.next = node.prev, node.next
             node.prev, node.next = None, None
-        self.length -= 1 if self.length > 0 else 0
 
     def delete(self, val: Any, all: bool = False) -> None:
         if all:
             nodes = self.find_all(val)
         else:
-            nodes = [self.find(val)]
+            node = self.find(val)
+            nodes = [node] if node is not None else []
         for node in nodes:
             self._delete(node)
 
     def clean(self):
         self.head = None
         self.tail = None
-        self.length = 0
 
     def len(self):
-        return self.length
+        counter = 0
+        cur_node = self.head
+        while cur_node:
+            counter += 1
+            cur_node = cur_node.next
+        return counter
 
     def insert(self, after_node: Node, new_node: Node) -> None:
         if after_node is None and self.head is None:
@@ -89,7 +91,6 @@ class LinkedList2:
             after_node.next = new_node
             if self.tail is after_node:
                 self.tail = new_node
-        self.length += 1
 
     def add_in_head(self, new_node):
         new_node.next = self.head
@@ -98,4 +99,3 @@ class LinkedList2:
         if self.tail is None:
             self.tail = new_node
         self.head = new_node
-        self.length += 1

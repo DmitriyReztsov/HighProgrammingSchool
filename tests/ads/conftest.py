@@ -2,6 +2,7 @@ from pytest import fixture
 
 from lessons.ads.double_linked_list import LinkedList2
 from lessons.ads.double_linked_list import Node as Node2
+from lessons.ads.double_linked_list_star import DummyLinkedList, NodeD
 from lessons.ads.linked_list import LinkedList, Node
 
 
@@ -924,5 +925,391 @@ def setup_instances_to_len_2():
     s_list.head = n1
     s_list.tail = n4
     instances_list.append((s_list, 4))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_add_in_tail():
+    instances_list = []
+    s_list = DummyLinkedList()
+    n1 = NodeD(0)
+    instances_list.append((s_list, n1, n1, n1))
+
+    n1 = NodeD(0)
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n1
+    n2 = NodeD(1)
+    instances_list.append((s_list, n2, n1, n2))
+
+    n1 = NodeD(0)
+    n2 = NodeD(1)
+    n1.next, n2.prev = n2, n1
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n2
+    n3 = NodeD(2)
+    instances_list.append((s_list, n3, n1, n3))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_delete_3():
+    instances_list = []
+    s_list = DummyLinkedList()
+    instances_list.append((s_list, 12, None, None))
+
+    n1 = NodeD(12)
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n1
+    instances_list.append((s_list, 12, None, None))
+
+    n1 = NodeD(12)
+    n2 = NodeD(55)
+    n1.next, n2.prev = n2, n1
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n2
+    instances_list.append((s_list, 55, n1, n1))
+
+    n1 = NodeD(12)
+    n2 = NodeD(55)
+    n3 = NodeD(2100)
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n3
+    instances_list.append((s_list, 55, n1, n3))
+
+    n1 = NodeD(12)
+    n2 = NodeD(55)
+    n3 = NodeD(2100)
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n3
+    instances_list.append((s_list, 12, n2, n3))
+
+    n1 = NodeD(12)
+    n2 = NodeD(55)
+    n3 = NodeD(2100)
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n3
+    instances_list.append((s_list, 2100, n1, n2))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_delete_all_3():
+    instances_list = []
+    s_list = DummyLinkedList()
+    instances_list.append((s_list, 12, None, None))
+
+    n1 = NodeD(12)
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n1
+    instances_list.append((s_list, 12, None, None))
+
+    n1 = NodeD(55)
+    n2 = NodeD(55)
+    n1.next, n2.prev = n2, n1
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n2
+    instances_list.append((s_list, 55, None, None))
+
+    n1 = NodeD(12)
+    n2 = NodeD(55)
+    n3 = NodeD(55)
+    n4 = NodeD(200)
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    n3.next, n4.prev = n4, n3
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n4
+    instances_list.append((s_list, 55, n1, n4))
+
+    n1 = NodeD(12)
+    n2 = NodeD(55)
+    n3 = NodeD(200)
+    n4 = NodeD(55)
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    n3.next, n4.prev = n4, n3
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n4
+    instances_list.append((s_list, 55, n1, n3))
+
+    n1 = NodeD(55)
+    n2 = NodeD(12)
+    n3 = NodeD(55)
+    n4 = NodeD(200)
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    n3.next, n4.prev = n4, n3
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n4
+    instances_list.append((s_list, 55, n2, n4))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_find_3():
+    instances_list = []
+    s_list = DummyLinkedList()
+    instances_list.append((s_list, 12, None))
+
+    n1 = NodeD(12)
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n1
+    instances_list.append((s_list, 12, n1))
+
+    n1 = NodeD(12)
+    n2 = NodeD(55)
+    n1.next = n2
+    n2.prev = n1
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n2
+    instances_list.append((s_list, 55, n2))
+
+    n1 = NodeD(12)
+    n2 = NodeD(55)
+    n3 = NodeD(100)
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n3
+    instances_list.append((s_list, 55, n2))
+
+    n1 = NodeD(12)
+    n2 = NodeD(55)
+    n3 = NodeD(100)
+    n4 = NodeD(99)
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    n3.next, n4.prev = n4, n3
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n4
+    instances_list.append((s_list, 5500, None))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_find_all_3():
+    instances_list = []
+    s_list = DummyLinkedList()
+    instances_list.append((s_list, 12, []))
+
+    n1 = NodeD(12)
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n1
+    instances_list.append((s_list, 12, [n1]))
+
+    n1 = NodeD(12)
+    n2 = NodeD(55)
+    n1.next = n2
+    n2.prev = n1
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n2
+    instances_list.append((s_list, 55, [n2]))
+
+    n1 = NodeD(12)
+    n2 = NodeD(55)
+    n3 = NodeD(100)
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n3
+    instances_list.append((s_list, 55, [n2]))
+
+    n1 = NodeD(12)
+    n2 = NodeD(55)
+    n3 = NodeD(100)
+    n4 = NodeD(55)
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    n3.next, n4.prev = n4, n3
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n4
+    instances_list.append((s_list, 55, [n2, n4]))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_clean_3():
+    instances_list = []
+    s_list = DummyLinkedList()
+    instances_list.append((s_list, None, None, 0))
+
+    n1 = NodeD(0)
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n1
+    instances_list.append((s_list, None, None, 0))
+
+    n1 = NodeD(0)
+    n2 = NodeD(1)
+    n3 = NodeD(2)
+    n4 = NodeD(3)
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    n3.next, n4.prev = n4, n3
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n4
+    instances_list.append((s_list, None, None, 0))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_insert_3():
+    instances_list = []
+    s_list = DummyLinkedList()
+    n1 = NodeD(0)
+    instances_list.append((s_list, None, n1, n1, n1))
+
+    n1 = NodeD(0)
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n1
+    n2 = NodeD(1)
+    instances_list.append((s_list, None, n2, n1, n2))
+
+    n1 = NodeD(0)
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n1
+    n2 = NodeD(1)
+    instances_list.append((s_list, n1, n2, n1, n2))
+
+    n1 = NodeD(0)
+    n2 = NodeD(1)
+    n1.next, n2.prev = n2, n1
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n2
+    n3 = NodeD(2)
+    instances_list.append((s_list, None, n3, n1, n3))
+
+    n1 = NodeD(0)
+    n2 = NodeD(2)
+    n1.next, n2.prev = n2, n1
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n2
+    n3 = NodeD(1)
+    instances_list.append((s_list, n1, n3, n1, n2))
+
+    n1 = NodeD(0)
+    n2 = NodeD(1)
+    n1.next, n2.prev = n2, n1
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n2
+    n3 = NodeD(2)
+    instances_list.append((s_list, n2, n3, n1, n3))
+
+    n1 = NodeD(0)
+    n2 = NodeD(2)
+    n3 = NodeD(3)
+    n4 = NodeD(4)
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    n3.next, n4.prev = n4, n3
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n4
+    n5 = NodeD(1)
+    instances_list.append((s_list, n1, n5, n1, n4))
+
+    n1 = NodeD(0)
+    n2 = NodeD(1)
+    n3 = NodeD(3)
+    n4 = NodeD(4)
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    n3.next, n4.prev = n4, n3
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n4
+    n5 = NodeD(2)
+    instances_list.append((s_list, n2, n5, n1, n4))
+
+    n1 = NodeD(0)
+    n2 = NodeD(1)
+    n3 = NodeD(2)
+    n4 = NodeD(3)
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    n3.next, n4.prev = n4, n3
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n4
+    n5 = NodeD(4)
+    instances_list.append((s_list, n4, n5, n1, n5))
+
+    n1 = NodeD(0)
+    n2 = NodeD(1)
+    n3 = NodeD(2)
+    n4 = NodeD(3)
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    n3.next, n4.prev = n4, n3
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n4
+    n5 = NodeD(4)
+    instances_list.append((s_list, None, n5, n1, n5))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_add_in_head_3():
+    instances_list = []
+    s_list = DummyLinkedList()
+    n1 = NodeD(0)
+    instances_list.append((s_list, n1, n1, n1))
+
+    n1 = NodeD(0)
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n1
+    n2 = NodeD(1)
+    instances_list.append((s_list, n2, n2, n1))
+
+    n1 = NodeD(0)
+    n2 = NodeD(1)
+    n1.next, n2.prev = n2, n1
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n2
+    n3 = NodeD(2)
+    instances_list.append((s_list, n3, n3, n2))
 
     return instances_list
