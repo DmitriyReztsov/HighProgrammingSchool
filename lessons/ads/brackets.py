@@ -1,6 +1,5 @@
 def brackets_are_correct(inp: str) -> bool:
     stack = []
-    to_check = {"(": ")", "[": "]", "{": "}"}
     for sk in inp:
         if sk == "(":
             stack.append(sk)
