@@ -1,5 +1,5 @@
 import ctypes
-from types import Any, List
+from typing import Any, List
 
 
 class DynArray:
