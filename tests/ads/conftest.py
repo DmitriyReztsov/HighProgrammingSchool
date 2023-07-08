@@ -3,6 +3,7 @@ from pytest import fixture
 from lessons.ads.double_linked_list import LinkedList2
 from lessons.ads.double_linked_list import Node as Node2
 from lessons.ads.double_linked_list_star import DummyLinkedList, NodeD
+from lessons.ads.dynamic_array import DynArray
 from lessons.ads.linked_list import LinkedList, Node
 
 
@@ -1311,5 +1312,71 @@ def setup_instances_to_add_in_head_3():
     s_list.tail = n2
     n3 = NodeD(2)
     instances_list.append((s_list, n3, n3, n2))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_dynamic_array_insert():
+    instances_list = []
+    da = DynArray()
+    instances_list.append((da, 0, 16))
+
+    da = DynArray()
+    for i in range(5):
+        da.append(i)
+    instances_list.append((da, 5, 16))
+
+    da = DynArray()
+    for i in range(16):
+        da.append(i)
+    instances_list.append((da, 2, 16 * 2))
+
+    da = DynArray()
+    for i in range(16):
+        da.append(i)
+    instances_list.append((da, 16, 16 * 2))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_dynamic_array_delete():
+    instances_list = []
+    da = DynArray()
+    for i in range(5):
+        da.append(i)
+    instances_list.append((da, 1, 16))
+
+    da = DynArray()
+    for i in range(32):
+        da.append(i)
+    instances_list.append((da, 15, 21))
+
+    da = DynArray()
+    for i in range(16):
+        da.append(i)
+    instances_list.append((da, 5, 16))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_dynamic_array_delete_no_resize():
+    instances_list = []
+    da = DynArray()
+    for i in range(5):
+        da.append(i)
+    instances_list.append((da, 4, 4))
+
+    da = DynArray()
+    for i in range(32):
+        da.append(i)
+    instances_list.append((da, 2, 2))
+
+    da = DynArray()
+    for i in range(16):
+        da.append(i)
+    instances_list.append((da, 15, 15))
 
     return instances_list
