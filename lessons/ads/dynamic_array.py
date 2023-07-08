@@ -39,7 +39,7 @@ class DynArray:
         self.array[self.count] = itm
         self.count += 1
 
-    def _validate_index(self, i: int, from_insert: bool =False) -> int:
+    def _validate_index(self, i: int, from_insert: bool = False) -> int:
         if i < 0 or i > self.count or (not from_insert and i == self.count):
             raise IndexError
         return i

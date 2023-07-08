@@ -5,6 +5,8 @@ from lessons.ads.double_linked_list import Node as Node2
 from lessons.ads.double_linked_list_star import DummyLinkedList, NodeD
 from lessons.ads.dynamic_array import DynArray
 from lessons.ads.linked_list import LinkedList, Node
+from lessons.ads.stack import Stack
+from lessons.ads.stack_FIFO import Stack as StackFIFO
 
 
 @fixture
@@ -1378,5 +1380,109 @@ def setup_instances_to_dynamic_array_delete_no_resize():
     for i in range(16):
         da.append(i)
     instances_list.append((da, 15, 15))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_stack_push():
+    instances_list = []
+    stack = Stack()
+    instances_list.append((stack,))
+
+    stack = Stack()
+    stack.stack = [0, 1, 2, 3]
+    instances_list.append((stack,))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_stack_pop():
+    instances_list = []
+    stack = Stack()
+    instances_list.append((stack, None))
+
+    stack = Stack()
+    stack.stack = [0, 1, 2, 3]
+    instances_list.append((stack, 3))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_stack_size():
+    instances_list = []
+    stack = Stack()
+    instances_list.append((stack, 0))
+
+    stack = Stack()
+    stack.stack = [0, 1, 2, 3]
+    instances_list.append((stack, 4))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_stack_peek():
+    instances_list = []
+    stack = Stack()
+    instances_list.append((stack, None))
+
+    stack = Stack()
+    stack.stack = [0, 1, 2, 3]
+    instances_list.append((stack, 3))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_stack_push_2():
+    instances_list = []
+    stack = StackFIFO()
+    instances_list.append((stack,))
+
+    stack = StackFIFO()
+    stack.stack = [0, 1, 2, 3]
+    instances_list.append((stack,))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_stack_pop_2():
+    instances_list = []
+    stack = StackFIFO()
+    instances_list.append((stack, None))
+
+    stack = StackFIFO()
+    stack.stack = [0, 1, 2, 3]
+    instances_list.append((stack, 0))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_stack_size_2():
+    instances_list = []
+    stack = StackFIFO()
+    instances_list.append((stack, 0))
+
+    stack = StackFIFO()
+    stack.stack = [0, 1, 2, 3]
+    instances_list.append((stack, 4))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_stack_peek_2():
+    instances_list = []
+    stack = StackFIFO()
+    instances_list.append((stack, None))
+
+    stack = StackFIFO()
+    stack.stack = [0, 1, 2, 3]
+    instances_list.append((stack, 0))
 
     return instances_list
