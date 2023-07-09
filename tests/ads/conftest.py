@@ -1528,3 +1528,35 @@ def setup_instances_to_queue_dequeue():
     instances_list.append((queue, 0))
 
     return instances_list
+
+
+@fixture
+def setup_instances_to_queue_enqueue_2():
+    from lessons.ads.queue_on_list import Queue
+
+    instances_list = []
+    queue = Queue()
+    instances_list.append((queue,))
+
+    queue = Queue()
+    queue.queue = [0, 1, 2]
+    queue.counter = len(queue.queue)
+    instances_list.append((queue,))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_queue_dequeue_2():
+    from lessons.ads.queue_on_list import Queue
+
+    instances_list = []
+    queue = Queue()
+    instances_list.append((queue, None))
+
+    queue = Queue()
+    queue.queue = [0, 1, 2, 3]
+    queue.counter = len(queue.queue)
+    instances_list.append((queue, 0))
+
+    return instances_list
