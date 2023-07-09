@@ -63,3 +63,33 @@ def test_dequeue_2(setup_instances_to_queue_dequeue_2):
 
         assert check_len == actual_len
         assert actual == expected
+
+
+def test_enqueue_3(setup_instances_to_queue_enqueue_3):
+    instances_list = setup_instances_to_queue_enqueue_3
+    for (data,) in instances_list:
+        input_list = data.inbox + data.outbox
+        check_len = len(input_list)
+
+        data.enqueue(100)
+
+        test_list = data.inbox + data.outbox
+
+        assert check_len + 1 == len(test_list)
+        assert test_list[-1] == 100
+        assert data.size() == len(test_list)
+
+
+def test_dequeue_2(setup_instances_to_queue_dequeue_3):
+    instances_list = setup_instances_to_queue_dequeue_3
+    for data, expected in instances_list:
+        input_list = data.inbox + data.outbox
+        check_len = len(input_list)
+
+        actual = data.dequeue()
+
+        test_list = data.inbox + data.outbox
+        actual_len = 0 if len(test_list) == 0 else len(test_list) + 1
+
+        assert check_len == actual_len
+        assert actual == expected

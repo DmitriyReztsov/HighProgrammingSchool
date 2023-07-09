@@ -1560,3 +1560,46 @@ def setup_instances_to_queue_dequeue_2():
     instances_list.append((queue, 0))
 
     return instances_list
+
+
+@fixture
+def setup_instances_to_queue_enqueue_3():
+    from lessons.ads.queue_on_stacks import Queue
+
+    instances_list = []
+    queue = Queue()
+    instances_list.append((queue,))
+
+    queue = Queue()
+    queue.inbox = [0, 1, 2]
+    queue.counter_in = len(queue.inbox)
+    instances_list.append((queue,))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_queue_dequeue_3():
+    from lessons.ads.queue_on_stacks import Queue
+
+    instances_list = []
+    queue = Queue()
+    instances_list.append((queue, None))
+
+    queue = Queue()
+    queue.inbox = [0, 1, 2, 3]
+    queue.counter_in = len(queue.inbox)
+    instances_list.append((queue, 0))
+
+    queue = Queue()
+    queue.inbox = [4, 5, 6, 7]
+    queue.outbox = [3, 2, 1, 0]
+    queue.counter_in = len(queue.inbox)
+    queue.counter_out = len(queue.outbox)
+    instances_list.append((queue, 0))
+    instances_list.append((queue, 1))
+    instances_list.append((queue, 2))
+    instances_list.append((queue, 3))
+    instances_list.append((queue, 4))
+
+    return instances_list
