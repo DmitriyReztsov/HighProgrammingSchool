@@ -1,4 +1,4 @@
-from typing import List
+from typing import Any, List
 
 
 class RoundQueue:
@@ -9,11 +9,11 @@ class RoundQueue:
         self.end = len(self.slots) - 1
         self.slots.extend([None] * (num_slots - len(self.slots)))
 
-    def enqueue(self, value):
+    def enqueue(self, value: Any) -> None:
         self.end = (self.end + 1) % self.num_slots
         self.slots[self.end] = value
 
-    def dequeue(self):
+    def dequeue(self) -> Any:
         value = self.slots[self.start]
         self.slots[self.start] = None
         self.start = (self.start + 1) % self.num_slots
