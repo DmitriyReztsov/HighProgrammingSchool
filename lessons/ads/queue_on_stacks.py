@@ -3,7 +3,6 @@ from typing import Any
 
 class Queue:
     def __init__(self):
-        # инициализация хранилища данных
         self.inbox = []
         self.outbox = []
         self.counter_in = 0
@@ -30,4 +29,4 @@ class Queue:
         return self.outbox.pop()
 
     def size(self):
-        return self.counter_out + self.counter_in # размер очереди
+        return self.counter_out + self.counter_in
