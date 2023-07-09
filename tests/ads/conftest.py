@@ -1486,3 +1486,45 @@ def setup_instances_to_stack_peek_2():
     instances_list.append((stack, 0))
 
     return instances_list
+
+
+@fixture
+def setup_instances_to_queue_enqueue():
+    from lessons.ads.queue import DummyLinkedList, NodeD, Queue
+
+    instances_list = []
+    queue = Queue()
+    instances_list.append((queue,))
+
+    n1 = NodeD(0)
+    n2 = NodeD(1)
+    n1.next, n2.prev = n2, n1
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n2
+    queue = Queue()
+    queue.queue = s_list
+    instances_list.append((queue,))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_queue_dequeue():
+    from lessons.ads.queue import DummyLinkedList, NodeD, Queue
+
+    instances_list = []
+    queue = Queue()
+    instances_list.append((queue, None))
+
+    n1 = NodeD(0)
+    n2 = NodeD(1)
+    n1.next, n2.prev = n2, n1
+    s_list = DummyLinkedList()
+    s_list.head = n1
+    s_list.tail = n2
+    queue = Queue()
+    queue.queue = s_list
+    instances_list.append((queue, 0))
+
+    return instances_list
