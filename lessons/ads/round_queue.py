@@ -4,7 +4,6 @@ from lessons.ads.queue_on_list import Queue
 
 
 def rotate_queue(queue: Queue, rotate_num: int) -> None:
-    circle = [None] * rotate_num
     if rotate_num > queue.size():
         queue.queue.extend([None] * (rotate_num - queue.size()))
 
