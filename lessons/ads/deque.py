@@ -1,13 +1,18 @@
+from typing import Any, List
+
+
 class Deque:
     def __init__(self):
         # инициализация внутреннего хранилища
-        self.deque = []
+        # лучше использовать collections.deque как оптимизированную
+        # для извлечение и добавления элементов в начало очереди
+        self.deque: List = []
 
-    def addFront(self, item):
+    def addFront(self, item: Any):
         # добавление в голову
         self.deque.insert(0, item)
 
-    def addTail(self, item):
+    def addTail(self, item: Any):
         # добавление в хвост
         self.deque.append(item)
 
