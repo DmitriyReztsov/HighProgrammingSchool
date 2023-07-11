@@ -1615,3 +1615,63 @@ def setup_instances_to_queue_rotate():
     instances_list.append((queue, 10))
 
     return instances_list
+
+
+@fixture
+def setup_instances_to_deque_add_front():
+    from lessons.ads.deque import Deque
+
+    instances_list = []
+    queue = Deque()
+    instances_list.append((queue,))
+
+    queue = Deque()
+    queue.deque = [0, 1, 2]
+    instances_list.append((queue,))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_deque_add_tail():
+    from lessons.ads.deque import Deque
+
+    instances_list = []
+    queue = Deque()
+    instances_list.append((queue,))
+
+    queue = Deque()
+    queue.deque = [0, 1, 2]
+    instances_list.append((queue,))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_deque_remove_front():
+    from lessons.ads.deque import Deque
+
+    instances_list = []
+    queue = Deque()
+    instances_list.append((queue, None))
+
+    queue = Deque()
+    queue.deque = [0, 1, 2]
+    instances_list.append((queue, 0))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_deque_remove_tail():
+    from lessons.ads.deque import Deque
+
+    instances_list = []
+    queue = Deque()
+    instances_list.append((queue, None))
+
+    queue = Deque()
+    queue.deque = [0, 1, 2]
+    instances_list.append((queue, 2))
+
+    return instances_list
