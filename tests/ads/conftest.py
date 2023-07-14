@@ -1675,3 +1675,296 @@ def setup_instances_to_deque_remove_tail():
     instances_list.append((queue, 2))
 
     return instances_list
+
+
+@fixture
+def setup_instances_to_oredered_list_find():
+    from lessons.ads.ordered_list import Node, OrderedList, OrderedStringList
+
+    instances_list = []
+    s_list = OrderedList(True)
+    instances_list.append((s_list, 12, None))
+
+    s_list = OrderedStringList(True)
+    instances_list.append((s_list, "12", None))
+
+    n1 = Node(12)
+    s_list = OrderedList(True)
+    s_list.head = n1
+    s_list.tail = n1
+    instances_list.append((s_list, 12, n1))
+
+    n1 = Node("12")
+    s_list = OrderedStringList(True)
+    s_list.head = n1
+    s_list.tail = n1
+    instances_list.append((s_list, "12", n1))
+
+    n1 = Node(12)
+    n2 = Node(55)
+    n1.next = n2
+    n2.prev = n1
+    s_list = OrderedList(True)
+    s_list.head = n1
+    s_list.tail = n2
+    instances_list.append((s_list, 55, n2))
+
+    n1 = Node("12")
+    n2 = Node("55")
+    n1.next = n2
+    n2.prev = n1
+    s_list = OrderedStringList(True)
+    s_list.head = n1
+    s_list.tail = n2
+    instances_list.append((s_list, "55", n2))
+
+    n1 = Node(12)
+    n2 = Node(55)
+    n3 = Node(100)
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    s_list = OrderedList(True)
+    s_list.head = n1
+    s_list.tail = n3
+    instances_list.append((s_list, 55, n2))
+
+    n1 = Node("100")
+    n2 = Node("12")
+    n3 = Node("55")
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    s_list = OrderedStringList(True)
+    s_list.head = n1
+    s_list.tail = n3
+    instances_list.append((s_list, "12", n2))
+
+    n1 = Node(100)
+    n2 = Node(12)
+    n3 = Node(55)
+    n4 = Node(99)
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    n3.next, n4.prev = n4, n3
+    s_list = OrderedList(True)
+    s_list.head = n1
+    s_list.tail = n4
+    instances_list.append((s_list, 5500, None))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_oredered_list_add():
+    from lessons.ads.ordered_list import Node, OrderedList, OrderedStringList
+
+    instances_list = []
+    s_list = OrderedList(True)
+    instances_list.append((s_list,))
+
+    n1 = Node(120)
+    s_list = OrderedList(True)
+    s_list.head = n1
+    s_list.tail = n1
+    instances_list.append((s_list,))
+
+    n1 = Node(12)
+    n2 = Node(55)
+    n1.next = n2
+    n2.prev = n1
+    s_list = OrderedList(True)
+    s_list.head = n1
+    s_list.tail = n2
+    instances_list.append((s_list,))
+
+    n1 = Node(12)
+    n2 = Node(55)
+    n3 = Node(100)
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    s_list = OrderedList(True)
+    s_list.head = n1
+    s_list.tail = n3
+    instances_list.append((s_list,))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_oredered_list_delete():
+    from lessons.ads.ordered_list import Node, OrderedList, OrderedStringList
+
+    instances_list = []
+    s_list = OrderedList(True)
+    instances_list.append((s_list,))
+
+    n1 = Node(12)
+    s_list = OrderedList(True)
+    s_list.head = n1
+    s_list.tail = n1
+    instances_list.append((s_list,))
+
+    n1 = Node(12)
+    n2 = Node(55)
+    n1.next = n2
+    n2.prev = n1
+    s_list = OrderedList(True)
+    s_list.head = n1
+    s_list.tail = n2
+    instances_list.append((s_list,))
+
+    n1 = Node(12)
+    n2 = Node(25)
+    n3 = Node(55)
+    n4 = Node(55)
+    n5 = Node(100)
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    n3.next, n4.prev = n4, n3
+    n4.next, n5.prev = n5, n4
+    s_list = OrderedList(True)
+    s_list.head = n1
+    s_list.tail = n5
+    instances_list.append((s_list,))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_oredered_list_find_desc():
+    from lessons.ads.ordered_list import Node, OrderedList, OrderedStringList
+
+    instances_list = []
+    s_list = OrderedList(False)
+    instances_list.append((s_list, 12, None))
+
+    s_list = OrderedStringList(False)
+    instances_list.append((s_list, "12", None))
+
+    n1 = Node(12)
+    s_list = OrderedList(False)
+    s_list.head = n1
+    s_list.tail = n1
+    instances_list.append((s_list, 12, n1))
+
+    n1 = Node("12")
+    s_list = OrderedStringList(False)
+    s_list.head = n1
+    s_list.tail = n1
+    instances_list.append((s_list, "12", n1))
+
+    n1 = Node(55)
+    n2 = Node(12)
+    n1.next = n2
+    n2.prev = n1
+    s_list = OrderedList(False)
+    s_list.head = n1
+    s_list.tail = n2
+    instances_list.append((s_list, 55, n1))
+
+    n1 = Node("55")
+    n2 = Node("12")
+    n1.next = n2
+    n2.prev = n1
+    s_list = OrderedStringList(False)
+    s_list.head = n1
+    s_list.tail = n2
+    instances_list.append((s_list, "12", n2))
+
+    n1 = Node(120)
+    n2 = Node(55)
+    n3 = Node(10)
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    s_list = OrderedList(False)
+    s_list.head = n1
+    s_list.tail = n3
+    instances_list.append((s_list, 55, n2))
+
+    n1 = Node("9100")
+    n2 = Node("812")
+    n3 = Node("55")
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    s_list = OrderedStringList(False)
+    s_list.head = n1
+    s_list.tail = n3
+    instances_list.append((s_list, "812", n2))
+
+    n1 = Node(1200)
+    n2 = Node(120)
+    n3 = Node(55)
+    n4 = Node(9)
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    n3.next, n4.prev = n4, n3
+    s_list = OrderedList(False)
+    s_list.head = n1
+    s_list.tail = n4
+    instances_list.append((s_list, 5500, None))
+
+    return instances_list
+
+
+@fixture
+def setup_instances_to_oredered_list_add_desc():
+    from lessons.ads.ordered_list import Node, OrderedList, OrderedStringList
+
+    instances_list = []
+    s_list = OrderedList(False)
+    instances_list.append((s_list,))
+
+    n1 = Node(12)
+    s_list = OrderedList(False)
+    s_list.head = n1
+    s_list.tail = n1
+    instances_list.append((s_list,))
+
+    n1 = Node(120)
+    n2 = Node(55)
+    n1.next = n2
+    n2.prev = n1
+    s_list = OrderedList(False)
+    s_list.head = n1
+    s_list.tail = n2
+    instances_list.append((s_list,))
+
+    n1 = Node(120)
+    n2 = Node(55)
+    n3 = Node(10)
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    s_list = OrderedList(False)
+    s_list.head = n1
+    s_list.tail = n3
+    instances_list.append((s_list,))
+
+    instances_list = []
+    s_list = OrderedStringList(False)
+    instances_list.append((s_list,))
+
+    n1 = Node("12")
+    s_list = OrderedStringList(False)
+    s_list.head = n1
+    s_list.tail = n1
+    instances_list.append((s_list,))
+
+    n1 = Node("912")
+    n2 = Node("55")
+    n1.next = n2
+    n2.prev = n1
+    s_list = OrderedStringList(False)
+    s_list.head = n1
+    s_list.tail = n2
+    instances_list.append((s_list,))
+
+    n1 = Node("912")
+    n2 = Node("55")
+    n3 = Node("100")
+    n1.next, n2.prev = n2, n1
+    n2.next, n3.prev = n3, n2
+    s_list = OrderedStringList(False)
+    s_list.head = n1
+    s_list.tail = n3
+    instances_list.append((s_list,))
+
+    return instances_list

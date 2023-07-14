@@ -9,5 +9,5 @@ def is_palindrome(phrase: str) -> bool:
     while phrase_deque.size() > 1:
         if phrase_deque.removeFront() != phrase_deque.removeTail():
             return False
-        
+
     return True
