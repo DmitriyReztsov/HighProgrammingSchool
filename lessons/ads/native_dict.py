@@ -15,22 +15,43 @@ class NativeDictionary:
             % self.size
         )
 
+    def _seek_slot(self, key: str) -> Optional[int]:
+        # находит индекс пустого слота для значения, или None
+        slot = self.hash_fun(key)
+        first_slot = slot
+        while self.slots[slot] is not None:
+            slot = (slot + 1) % self.size
+            if slot == first_slot:
+                return None
+        return slot
+
+    def _find(self, key: str) -> Optional[int]:
+        # находит индекс слота со значением, или None
+        slot = self.hash_fun(key)
+        first_slot = slot
+        while self.slots[slot] != key:
+            slot = (slot + 1) % self.size
+            if slot == first_slot:
+                return None
+        return slot
+
     def is_key(self, key: str) -> bool:
         # возвращает True если ключ имеется,
         # иначе False
-        return self.slots[self.hash_fun(key)] is not None and self.slots[self.hash_fun(key)] == key
+        index = self._find(key)
+        return index is not None and self.slots[index] is not None and self.slots[index] == key
 
     def put(self, key: str, value: Any) -> None:
         # гарантированно записываем
         # значение value по ключу key
-        index = self.hash_fun(key)
+        index = self._find(key) or self._seek_slot(key)
         self.slots[index] = key
         self.values[index] = value
 
     def get(self, key: str) -> Optional[Any]:
         # возвращает value для key,
         # или None если ключ не найден
-        index = self.hash_fun(key)
-        if self.slots[index] != key:
+        index = self._find(key)
+        if index is None or self.slots[index] != key:
             return None
         return self.values[index]

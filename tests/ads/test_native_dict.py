@@ -23,7 +23,7 @@ def test_is_key():
     dictionary.put("f", "another value")
     dictionary.put("1", 2)
 
-    assert dictionary.is_key("a") is False  # due to collision "a":"value" was overidden by "f":"another value"
+    assert dictionary.is_key("a") is True
     assert dictionary.is_key("f") is True
     assert dictionary.is_key("1") is True
     assert dictionary.is_key("asd1") is False
