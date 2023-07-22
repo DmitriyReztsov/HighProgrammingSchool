@@ -101,21 +101,41 @@ def test_difference():
 
     test_set_2 = PowerSet()
     test_set_2.put("a")
-    test_set_2.put("aca")
-    test_set_2.put("acb")
+    test_set_2.put("aa")
+    test_set_2.put("ab")
     test_set_2.put("ba")
-    test_set_2.put("bacb")
+    test_set_2.put("bab")
     test_set_2.put("aba")
+
+    test_set_4 = PowerSet()
+    test_set_4.put("a")
+    test_set_4.put("aca")
+    test_set_4.put("acb")
+    test_set_4.put("ba")
+    test_set_4.put("bacb")
+    test_set_4.put("aba")
 
     test_set_3 = PowerSet()
 
-    difference_1 = test_set_1.difference(test_set_2)
+    test_set_5 = PowerSet()
+    test_set_5.put("1")
+
+    difference_1 = test_set_1.difference(test_set_4)
     difference_2 = test_set_1.difference(test_set_3)
     difference_3 = test_set_3.difference(test_set_2)
+    difference_4 = test_set_1.difference(test_set_2)
+    difference_5 = test_set_3.difference(test_set_1)
+    difference_6 = test_set_1.difference(test_set_5)
+    difference_7 = test_set_5.difference(test_set_1)
 
     assert {"aa", "ab", "bab"} == set(difference_1.slots.values())
+    assert set(difference_4.slots.values()) == set()
     assert {"a", "aa", "ab", "ba", "bab", "aba"} == set(difference_2.slots.values())
     assert difference_3.size() == 0
+    assert set(difference_3.slots.values()) == set()
+    assert set(difference_5.slots.values()) == set()
+    assert {"a", "aa", "ab", "ba", "bab", "aba"} == set(difference_6.slots.values())
+    assert {"1"} == set(difference_7.slots.values())
 
 
 def test_issubset():
