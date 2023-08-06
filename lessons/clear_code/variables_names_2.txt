@@ -1,0 +1,42 @@
+6.1.
+new_entry - new_recipe
+// в создании объектов рецептов
+
+new_value - time_in_future
+// новое время, когда надо отправить письмо
+
+statuses_dict - stauses_mapping
+// словарь (может быть любой структурой данных) с соответствием статусов
+
+objects_list - questions_list
+// список вопросов в анкете
+
+value_int - amount_cents
+// значение цены в центах, целочисленное
+
+6.2.
+validate_input - для функции, проверяющей правильность введенных данных
+
+instance_dto - для объекта, предназначенного для хранния набора переменных и передачи их
+
+tasks_queue - для очереди задач
+
+bulk_update_list - для списка объектов для создания одним запросом
+
+6.3.
+state_of_incorporation - штат юридического адреса
+
+subcontractor - объект модели Company, являющийся подрядчиком по отношению к текущему объекту этой же модели
+
+number_of_filled_fields - счетчик заполненных полей при подсчете статуса заполненности формы
+
+6.4.
+author - post_author
+
+sub - subcontractor
+
+gc - gencontractor
+
+pdff - pdf_file
+
+app - application_form
