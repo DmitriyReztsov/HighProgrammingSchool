@@ -1,0 +1,38 @@
+7.1.
+company_gc - is_company_gc
+profile_procore - has_procore_profile
+may_download - is_ready_to_download
+new - created
+active - is_active
+
+7.2.
+entity, created = Model.objects.get_or_create(...)
+error = False
+for item in request_dict.items():
+    if int(item[1]) <= 0:
+        error = True
+
+7.3.
+for item in project_commitments_query_set:
+for step in steps:
+
+7.4.
+head / tail
+prev / next
+
+7.5.
+было:
+def compare(self, v1: Node, v2: Node) -> int:
+    if v1.value > v2.value:
+        return 1
+    if v1.value < v2.value:
+        return -1
+    return 0
+
+можно переписать:
+def compare(self, first_value: Node, second_value: Node) -> int:
+    if first_value.value > second_value.value:
+        return 1
+    if first_value.value < second_value.value:
+        return -1
+    return 0
