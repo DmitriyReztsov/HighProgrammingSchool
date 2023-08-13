@@ -1,0 +1,51 @@
+today = timezone.now() - date_time_now = ...
+// today_day = today.weekday()
+
+ReduceOp - ReduceOperations
+// имя класса
+
+def encode():
+    text = input("Enter text to encode: ")
+    key = input("Enter number of characters you want to shift: ")
+// стоит заменить переменные на более информативные, например - text_to_encode, num_chars_to_shift
+
+def res(R1, R2):
+    sum = R1 + R2
+// калькулятор суммы сопротивлений, стоит переименовать и имя ф-ции на resistance_sum,
+// переменные можно переименовать R1_om, R2_om
+
+def validate(self):
+    sum_ = 0
+    ...
+    ...
+        sum_ += sum([eval(i) for i in str(double_it)])
+    ...
+        sum_ += double_it
+    ...
+        sum_ += int(crd_no[i])
+    ...
+    if sum_ % 10 == 0:
+        ...
+// метод для валидации номера кредитных карт, стоит переименовать sum_ в check_value_sum
+
+for i in range(0, rows):
+    sum = 0
+    for j in range(0, cols - 1):
+        if i == j:
+            continue
+        else:
+            sum += table[i][j]
+    if table[i][i] <= sum:
+        raise ValueError(...)
+// если здесь переменная sum исользуется для валидации значений, то ее стоит переименовать в control_sum
+
+def getbasic(target: str, genes: list[str], debug: bool = True) -> tuple[int, int, str]:
+    ...
+    not_in_genes_list = sorted({c for c in target if c not in genes})
+    if not_in_genes_list:
+        raise ValueError()
+// стоит переименовать not_in_genes_list - воспринимается как булевая переменная - в, например, exceptions_list
+
+def generate(k: int, arr: list):
+// k - неиформативная переменная, из контекста означающая длину массива. Стоит переименовать в arr_len
+

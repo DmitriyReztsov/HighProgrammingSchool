@@ -1,0 +1,24 @@
+3.1.
+Node(), DummyNode() -> Node(), DummyNode(Node)
+// чтобы не плодить сущности одинаковых классов - использую наследование от одной сущности
+
+LinkedList(), DummyLinkedList() -> DummyLinkedList(LinkedList)
+
+class MessageToSend() -> Message
+
+class GetClient -> Client
+
+class OverrideUser -> CustomUser
+
+3.2.
+validate(), check_input() -> validate()
+
+get(), show_list() -> get()
+
+retieve(), show_entity() -> retrieve()
+
+len(), size() -> len()
+
+add(), push() -> push()
+
+find(), seek() -> find()
