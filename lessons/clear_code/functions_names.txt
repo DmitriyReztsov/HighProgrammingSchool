@@ -1,0 +1,36 @@
+def likes(names): - def format_likes_names(names):
+// получая список имен пользователей, лайкнувших автора,
+// возвращает запись формата "Имя, Имя и еще Х других пользователей дайкнули ваши пост"
+
+def high_and_low(numbers): - def get_highest_and_lowest_values(numbers):
+// из ряда значений высот возвращает пару самых высоких и низкиз значений
+
+def array_diff(a: list, b: list): - def get_array_diff(a: list, b: list):
+// возвращает список-разницу между двумя входящими списками
+
+def convert(links): - def convert_to_nodes(links):
+// предобразование списка чисел в список объектов класса convert_to_nodes
+
+def annagram(str1, str2): - def is_annagram(str1, str2):
+// функция возвращает булево значение проверки, является ли одна строка аннаграммой другой строки
+
+def is_correct(inp): - def bracket_sequence_is_correct(br_seq):
+// проверка правильной скобочной последовательности
+
+def infix_from_kovalsky(postfix): - def calculate_postfix(postfix):
+// расчет постфиксной записи
+
+def winner_is(first, second): - def winner_determination(player_1, playser_2):
+// расчет победителя игры в карты
+
+def balanced_tree(array): - def balanced_tree_construction(array):
+// построение сбалансированного дерева
+
+def optimum(time_table, n): - def find_optimal_time(time_table, n):
+// поиск оптимального времени, затраченного на прохождение маршрута
+
+def check_mate(n, m): - def is_check_mate(n, m):
+// проверка хода на шах или мат
+
+def subsequence(m, m_sequence, n, n_sequence): - def combination_subsequence(m, m_sequence, n, n_sequence):
+// формирование подпоследовательности из двух последовательностей
