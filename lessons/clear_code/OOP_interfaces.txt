@@ -1,0 +1,48 @@
+class Node:
+    def __init__(self, v: Any) -> None:
+        self.value = v
+        self.prev = None
+        self.next = None
+
+    @staticmethod
+    def create_int_node(value: int):
+        ...
+
+    @staticmethod
+    def create_str_node(value: str):
+        ...
+
+
+class DynArray:
+    DOWN_RESIZE_CAPACITY_CONDITION = 0.5
+    DOWN_RESIZE_CAPACITY_RATE = 1.5
+    MINIMUM_CAPACITY = 16
+
+    def __init__(self) -> None:
+        self.count = 0
+        self.capacity = self.MINIMUM_CAPACITY
+        self.array = self.__make_array(self.capacity)
+
+    @staticmethod
+    def make_array(**params) -> DynArray:
+        ...
+        ar = DynArray()
+        ...
+        return ar
+
+    def __make_array(...):
+        ...
+
+
+class LinkedList:
+    @staticmethod
+    def create_list(...):
+        pass
+
+class DummyLinkedList(LinkedList):
+    @staticmethod
+    def create(...):
+        """ implementation for dummy linked list
+
+        """
+        ...
