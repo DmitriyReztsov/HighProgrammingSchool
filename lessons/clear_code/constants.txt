@@ -1,0 +1,107 @@
+class DynArray:
+    DOWN_RESIZE_CAPACITY_CONDITION = 0.5
+    DOWN_RESIZE_CAPACITY_RATE = 1.5
+    UP_RESIZE_CAPACITY_RATE = 2  # добавил новую константу
+    MINIMUM_CAPACITY = 16
+
+    ...
+
+    def resize(self, new_capacity: int) -> None:
+        if new_capacity < MINIMUM_CAPACITY:  # здесь почему-то стояла цифра 16, что по смыслу - именно MINIMUM_CAPACITY
+            new_capacity = self.MINIMUM_CAPACITY
+        ...
+
+    def append(self, itm: Any) -> None:
+        if self.count == self.capacity:
+            self.resize(UP_RESIZE_CAPACITY_RATE * self.capacity)  # заменил цифру "2" переменной UP_RESIZE_CAPACITY_RATE
+        ...
+
+    def insert(self, i: int, itm: Any) -> None:
+        i = self._validate_index(i, True)
+        if self.count == self.capacity:
+            self.resize(UP_RESIZE_CAPACITY_RATE * self.capacity)  # заменил цифру "2" переменной UP_RESIZE_CAPACITY_RATE
+        ...
+
+
+PYTHON_MONDAY = 0
+RR_SUNDAY = 6
+def filter_is_day_for_send_reminders(self, reminders_type: str, weekday: int):
+        """
+        In ReminderRules model sunday - 0 index in array "days_of_week", saturday - 6 index in array "days_of_week"
+        In Python datetime monday - 0 weekday and sunday - 6 weekday.
+        It is reason for changing "weekday" variable.
+
+        """
+        if weekday == RR_SUNDAY:  # заменил 0 и 6 на переменные
+            weekday = PYTHON_MONDAY
+        else:
+            weekday += 1
+        return (
+            self.get_queryset()
+            .with_is_day_for_send_reminders(reminders_type, weekday)
+            .filter(is_day_for_send_reminders=True)
+        )
+
+
+HORSE_STEP = (1, 2)  # добавил константу, описывающие ход шахматного коня
+def check_mate(n, m):
+    dp = [
+        [0] * m
+    ]
+    dp.extend([
+        [0] * m for _ in range(n-1)
+    ])
+    dp[0][0] = 1
+    for ind_row, row in enumerate(dp):
+        for ind_col, value in enumerate(row):
+            if (new_row := ind_row + HORSE_STEP[0]) < n and (new_col := ind_col + HORSE_STEP[1]) < m:  # применил
+                dp[new_row][new_col] += value
+            if (new_row := ind_row + HORSE_STEP[1]) < n and (new_col := ind_col + HORSE_STEP[0]) < m:  # применил
+                dp[new_row][new_col] += value
+    return dp[n-1][m-1]
+
+
+DIRECTION_OPTIONS = {"right": "R", "down": "D"}  # добавил константу, содержащую все варианты кодов для направлений движения
+def my_max(dp, index_1, index_2):
+    if dp[index_1[0]][index_1[1]] > dp[index_2[0]][index_2[1]]:
+        value = dp[index_1[0]][index_1[1]]
+        direction = DIRECTION_OPTIONS["right"]  # применил
+    else:
+        value = dp[index_2[0]][index_2[1]]
+        direction = DIRECTION_OPTIONS["down"]  # применил
+    return value, direction
+
+
+RECALL_PERIOD_EXCEPTION = 5
+RECALL_PERIOD_REGULAR = 600
+
+def main():
+    current_timestamp = int(time.time())  # начальное значение timestamp
+
+    while True:
+        try:
+            new_homework = get_homework_statuses(current_timestamp)
+            if new_homework.get('homeworks'):
+                send_message(parse_homework_status(new_homework.get('homeworks')[0]))
+            current_timestamp = value(new_homework, 'current_date')  # обновить timestamp
+            # time.sleep(660)  # опрашивать раз в 11 минут - БЫЛО
+            time.sleep(RECALL_PERIOD_REGULAR)
+
+        except Exception as e:
+            print(f'Бот упал с ошибкой: {e}')
+            # time.sleep(5)
+            time.sleep(RECALL_PERIOD_EXCEPTION)
+            continue
+
+
+class CashCalculator(Calculator):
+    EURO_RATE = 80.00
+    USD_RATE = 70.00
+    RUB_RATE = 1.00
+
+    def get_today_cash_remained(self, currency):
+        currencies = {
+            'eur': ('Euro', self.EURO_RATE),  # заменил захардкодженные значения
+            'usd': ('USD', self.USD_RATE),
+            'rub': ('руб', self.RUB_RATE),
+        }
