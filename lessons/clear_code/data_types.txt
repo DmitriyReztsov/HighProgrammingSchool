@@ -1,0 +1,88 @@
+def _delete(self, node: Node) -> None:
+    node_is_head = self.head == node
+    node_is_tail = self.tail == node
+    if node_is_head and node_is_tail:
+        self.head, self.tail = None, None
+    elif node_is_head:
+        self.head = node.next
+        node.next.prev, node.next = None, None
+    elif node_is_tail:
+        self.tail = node.prev
+        node.prev.next, node.prev = None, None
+// ввел две логические переменные для улучшения читаемости (node_is_head, node_is_tail)
+
+class Ledger(SoftDeleteObject, models.Model):
+    ...
+    invoice_amount = models.BigIntegerField()
+    ...
+// сумма инвойса записывается и обрабатывается в центах
+
+def to_base(n: int, b: int):
+    return "0" if not n else to_base(n // b, b).lstrip("0") + bs[n % b]
+// использование целочисленного деления для корректного деления
+
+# calculate top/left corner for centered text
+parts = 8
+offset_x = original_image_size[0] // parts
+offset_y = original_image_size[1] // parts
+// использование целочисленного деления для корректного деления
+
+IS_PROD_ENV = settings.BUILD_ENV == "production"
+// вынесена частая проверка в глобальную переменную
+
+is_own_form = section.form.general_contractor and section.form.general_contractor.id == gc_id
+if not is_own_form:
+    return Response(...)
+// для понимания сущности проверки создана логическая перменная
+
+def get_answers(...):
+    gc = self.request.user.selected_membership.company
+    is_section_financial = section.type == SectionTypes.FINANCIAL
+    if is_section_financial and gc.is_company_gc:
+        return Response(status=status.HTTP_403_FORBIDDEN)
+// для читаемости проверка типа секции вынесена в отдельную переменную
+
+def has_object_permission(self, request, view, obj):
+    is_safe_method = request.method in permissions.SAFE_METHODS
+    is_contractor = request.user.selected_membership.company_id == obj.contractor_id
+    is_subcontractor = obj.subcontractors.filter(id=request.user.selected_membership.company_id).exists()
+    return is_safe_method or is_contractor or is_subcontractor
+// для читаемости и понимания сущности проверок вынесены проверки в отдельные логические переменные
+
+def get_serializer_class(self):
+    from_page = self.request.query_params.get("from", "")
+    from_coi = from_page.lower() == "coi"
+    from_epp = from_page.lower() == "epp"
+
+    if from_coi:
+        return ProjectListForCOISerializer
+    ...
+    if from_epp:
+        return ProjectListForEPPSerializer
+// для читаемости проверка запроса с конкретной страницы вынесена в логическую переменную
+
+def sign(self, request, *args, **kwargs):
+    signer_is_counterpart = user.selected_membership.company_id == document.counterpart_id
+    signer_is_gc = user.selected_membership.company_id == document.created_by_company_id
+    ...
+    if signer_is_counterpart and document.status not in (
+        DocumentProjectStatus.SENT,
+        DocumentProjectStatus.REVIEWED,
+    ):
+        return Response(...)
+
+    if signer_is_gc and document.status != DocumentProjectStatus.SIGNED:
+        return Response(...)
+
+    if signer_is_counterpart and (user == document.signing_user_gc):
+        return Response(...)
+// вынесены в логические переменные, которые описывают суть проверок, те проверки, которые определяют суть по косвенным признакам,
+// проверка (user == document.signing_user_gc) говорит сама за себя
+
+to_be_sent = not (company.trial_period_on == True)
+MailService.send_email_wrapper(
+    ...
+    to_be_sent=to_be_sent,
+    ...
+)
+// вынесена проверка для подтверждания отправки писем компаниям после пробного периода
