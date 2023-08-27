@@ -1,0 +1,403 @@
+# 1
+class Heap:
+    heap = []
+    def insert(self, value):
+        index = len(self.heap)
+        parent_index = index // 2 + index % 2 - 1  # переместил выше, чтобы перменная index объявлялась ближе к месту первого использования
+        self.heap.append(value)
+        # parent_index = index // 2 + index % 2 - 1  # было
+        while self.heap[parent_index] < self.heap[index] and parent_index >= 0:
+            self.heap[parent_index], self.heap[index] = self.heap[index], self.heap[parent_index]
+            index = parent_index
+            parent_index = index // 2 + index % 2 - 1
+
+# 2
+def calculate(n):
+    dp = [-1, 0, 1, 1]
+    dp.extend([None] * (n - 3))
+    # i = min(4, n)  # было
+    way = [-1, -1, 1, 1]
+    way.extend([None] * (n - 3))
+    i = min(4, n)  # перенес к заголовку цикла
+    while i <= n:
+        ...
+
+# 3
+def optimum(time_table, n):
+    # index = 2  # было
+    dp = [
+        time_table[0][0],
+    ]
+    if n > 1:
+        dp.append(min(time_table[0][0] + time_table[1][0], time_table[0][1]))
+    index = 2  # перенес к заголовку цикла
+    while index < n:
+        a = dp[index-1] + time_table[index][0]
+        b = dp[index-2] + time_table[index-1][1]
+        c = dp[index-3] + time_table[index-2][2] if index > 2 else time_table[index-2][2]
+        dp.append(min(a, b, c))
+        index += 1
+    return dp[-1]
+
+# 4
+def subsequence(m, m_sequence, n, n_sequence):
+    dp = []
+    [dp.append([None] * n) for _ in range(m)]
+    # steps = []  # было
+    found = False
+    for n_index, n_elem in enumerate(n_sequence):
+        if n_elem == m_sequence[0]:
+            dp[0][n_index] = 1
+            found = True
+        if found:
+            dp[0][n_index] = 1
+        else:
+            dp[0][n_index] = 0
+    found = False
+    for m_index, m_elem in enumerate(m_sequence):
+        if m_elem == n_sequence[0]:
+            dp[m_index - 1][0] = 1
+            found = True
+        if found:
+            dp[m_index - 1][0] = 1
+        else:
+            dp[m_index - 1][0] = 0
+    
+    for m_index, n_line in enumerate(dp):
+        for n_index, n_value in enumerate(n_line):
+            if m_index == 0 or n_index == 0:
+                continue
+            elif n_sequence[n_index] == m_sequence[m_index]:
+                prev_value = dp[m_index - 1][n_index - 1]
+            else:
+                prev_value = max(dp[m_index - 1][n_index], dp[m_index][n_index - 1])
+
+            dp[m_index][n_index] = (
+                prev_value + 1
+                if n_sequence[n_index] == m_sequence[m_index]
+                else prev_value
+            )
+
+    steps = []  # перенес ближе к месту начала использования
+    while n_index > 0 or m_index > 0:
+        if m_index == 0 and n_index > 0:
+            if dp[m_index][n_index] == (dp[m_index][n_index - 1] + 1):
+                steps.append(n_sequence[n_index])
+            n_index -= 1
+            continue
+        if n_index == 0 and m_index > 0:
+            if dp[m_index][n_index] == (dp[m_index - 1][n_index] + 1):
+                steps.append(n_sequence[n_index])
+            m_index -= 1
+            continue
+
+        if dp[m_index][n_index] == dp[m_index - 1][n_index]:
+            m_index -= 1
+        elif dp[m_index][n_index] == dp[m_index][n_index - 1]:
+            n_index -= 1
+        elif dp[m_index][n_index] == (dp[m_index - 1][n_index - 1] + 1):
+            steps.append(n_sequence[n_index])
+            n_index -= 1
+            m_index -= 1
+        if n_index < 0 and m_index > 0:
+            n_index = 0
+        if m_index < 0 and n_index > 0:
+            m_index = 0
+    if dp[0][0] == 1:
+        steps.append(n_sequence[0])
+    return reversed(steps)
+
+# 5
+class HelloSignCallbackView(APIView):
+    ...
+    def post(self, request, *args, **kwargs):
+        # signature_request_callback = self.save_signature_request_callback(request.data["json"])  # было
+        json_data = json.loads(request.data["json"])
+        event = json_data["event"]
+        is_verified = HelloSignService.verify_webhook(event)
+        if not is_verified:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        signature_request_callback = self.save_signature_request_callback(request.data["json"])  # перенес к первому использованию
+        event_type = signature_request_callback.event_type
+        if event_type == CALLBACK_TEST:
+            return Response(HELLO_SIGN_EXPECTED_RESPONSE, status=status.HTTP_200_OK)
+        if event_type in EVENT_TYPES:
+            ...
+        elif event_type in ERROR_EVENT_TYPES:
+            self.handle_error(signature_request_callback, "error")
+        else:  # добавил проверку на допустимость значений - если значения не известны, но возвращаем 400 ответ
+            return Response(HELLO_SIGN_UNEXPECTED_REQUEST, status=status.HTTP_400_BAD_REQUEST)
+
+# 6
+def cut_the_cake(n):
+    # cuts = 0  # было
+    # first_part = n  # было
+    if n == 1:
+        return 0
+    if n == 2:
+        return 1
+    cuts = 0  # перенес аккумулятор к месту первого использованию
+    first_part = n  # перенес счетчик к началу цикла
+    while first_part > 1:
+        _first_part = first_part // 2
+        first_part = max(_first_part, first_part - _first_part)
+        cuts += 1
+    return cuts
+
+# 7
+def calc_diff(n, operations, figures):
+    # diff = 0  # было
+    prepared_list = []
+    for fig in figures:
+        to_prepare = fig
+        mod = 0
+        while to_prepare:
+            unit = to_prepare % 10
+            prepared_list.append((unit * 10 ** mod, mod))
+            to_prepare = to_prepare // 10
+            mod += 1
+
+    prepared_list = sorted(prepared_list, key=lambda k: (-k[1], k[0]))
+
+    diff = 0  # перенес к первому использованию
+    for fig, mod in prepared_list:
+        if (fig // 10 ** mod) != 9:
+            _fig = 9 * 10 ** mod
+            diff += _fig - fig
+            fig = _fig
+            if (operations := operations - 1) == 0:
+                break
+    return diff
+
+# 8
+def import_to_csv():
+    path = os.path.abspath("homework12/hw12/report.csv")
+    # qs = HomeworkDone.objects.all()  # было
+    with open(path, "w", newline="") as csvfile:
+        fieldnames = ["Homework", "Student name", "Creation date", "Teacher name"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+        writer.writeheader()
+        qs = HomeworkDone.objects.all()  # перенес ближе к месту первого использования
+        for entry in qs:
+            homework = entry.homework_done.homework.text
+            student_name = str(entry.homework_done.student)
+            creation_date = entry.homework_done.created.strftime("%Y-%m-%d %H:%M:%S")
+            teacher_name = str(entry.homework_done.homework.created_by)
+            writer.writerow(
+                {
+                    "Homework": homework,
+                    "Student name": student_name,
+                    "Creation date": creation_date,
+                    "Teacher name": teacher_name,
+                }
+            )
+
+# 9
+async def page_parcing(session, main_url, page):
+    """Задача. Парсер, который пробегается по каждой странице и записывает данные."""
+    url = f"{main_url}?p={page}"
+
+    async with session.get(url) as response:
+        response_text = await response.text()
+
+        soup = BeautifulSoup(response_text, "lxml")
+
+        table_lines = soup.find("table", class_="table__layout--fixed").find_all("tr")
+        for line in table_lines:
+            cell_first = line.find("td", class_="table__td--big")
+            if not cell_first:
+                continue
+
+            title = cell_first.find("a").get("title")  # было
+            link = "https://markets.businessinsider.com" + cell_first.find("a").get(
+                "href"
+            )  # было
+            annual_growth = (
+                line.find_all("td", class_="table__td")[7]
+                .find_all("span")[1]
+                .text.strip()
+                .replace("%", "")
+            )
+            annual_growth_percent = round(float(annual_growth), 2)
+
+            link = "https://markets.businessinsider.com" + cell_first.find("a").get(
+                "href"
+            )  # переместил к месту использования
+            company_dict = {
+                "link": link,
+                "annual_growth_percent": annual_growth_percent,
+            }
+            title = cell_first.find("a").get("title")  # переместил к месту использования
+            chart_500[title] = company_dict
+
+# 10
+async def company_page_parcing(session, name, url, usd):
+    async with session.get(url) as response:
+        result = {}  # инициилизировал переменную, в которую буду собирать ответ
+        response_text = await response.text()
+        company_soup = BeautifulSoup(response_text, "lxml")
+        current_price = company_soup.find(
+            "span", class_="price-section__current-value"
+        ).text.strip()
+        current_price = current_price.replace(",", "")
+        current_price_rur = round(float(current_price) * float(usd), 2)
+        result["current_price_RUR"] = current_price_rur  # добавил в переменную result только что рассчитанное значение
+
+        company_code = (
+            company_soup.find("span", class_="price-section__category")
+            .text.strip()
+            .replace("Stock , ", "")
+        )
+        result["code"] = company_code  # добавил в переменную result только что рассчитанное значение
+        data_items = company_soup.find_all("div", class_="snapshot__data-item")
+
+        # there are two 'P/E Ratio' objects on the page
+        for item in data_items:
+            company_pe_ratio = None
+            if "P/E Ratio" in item.find("div", class_="snapshot__header").contents[0]:
+                company_pe_ratio = round(
+                    float(item.contents[0].strip().replace(",", "")), 2
+                )
+                break
+        result["P/E_as_is"] = company_pe_ratio  # добавил в переменную result только что рассчитанное значение
+
+        week_low_class = company_soup.find(string="52 Week Low")
+        if week_low_class:
+            week_low_class = week_low_class.find_parent("div").find_parent("div")
+            week_low_value = week_low_class.contents[0].strip().replace(",", "")
+            week_high_class = (
+                company_soup.find(string="52 Week High")
+                .find_parent("div")
+                .find_parent("div")
+            )
+            week_high_value = week_high_class.contents[0].strip().replace(",", "")
+            relevant_profit = (
+                round(float(week_high_value) / float(week_low_value), 2) * 100
+            )
+        else:
+            relevant_profit = None
+        result["profit_percent] = relevant_profit  # добавил в переменную result только что рассчитанное значение
+
+        # result = {
+        #     "code": company_code,
+        #     "current_price_RUR": current_price_rur,
+        #     "P/E_as_is": company_pe_ratio,
+        #     "profit_percent": relevant_profit,
+        # }  # было
+
+        chart_500[name].update(result)
+
+# 11
+if __name__ == "__main__":
+    opp_teacher = Teacher("Daniil", "Shadrin")
+    advanced_python_teacher = Teacher("Aleksandr", "Smetanin")
+    lazy_student = Student("Roman", "Petrov")
+    good_student = Student("Lev", "Sokolov")
+
+    oop_hw = opp_teacher.create_homework("Learn OOP", 1)
+    docs_hw = opp_teacher.create_homework("Read docs", 5)
+
+    # result_1 = good_student.do_homework(oop_hw, "I have done this hw")  # было
+    # result_2 = good_student.do_homework(docs_hw, "I have done this hw too")  # было
+    # result_3 = lazy_student.do_homework(docs_hw, "done")  # было
+    try:
+        result_4 = HomeworkResult(good_student, "fff", "Solution")
+    except Exception:
+        print("There was an exception here")
+
+    result_1 = good_student.do_homework(oop_hw, "I have done this hw")  # перенес переменную к месту использования
+    opp_teacher.check_homework(result_1)
+    temp_1 = opp_teacher.homework_done
+
+    advanced_python_teacher.check_homework(result_1)
+    temp_2 = Teacher.homework_done
+    assert temp_1 == temp_2
+
+    result_2 = good_student.do_homework(docs_hw, "I have done this hw too")  # перенес переменную к месту использования
+    opp_teacher.check_homework(result_2)
+
+    result_3 = lazy_student.do_homework(docs_hw, "done")  # перенес переменную к месту использования
+    opp_teacher.check_homework(result_3)
+
+    print(Teacher.homework_done[oop_hw])
+    Teacher.reset_results()
+
+# 12
+def read_magic_number(path: str, encoding="utf8", errors="ignore") -> bool:
+    with open(path, encoding=encoding, errors=errors) as file:
+        # line = int(file.readline())  # было
+        # проверка переменной на предмет допустимости ее значения
+        line = file.readline()
+        try:
+            line = int(line)
+        except ValueError:
+            raise
+        # конец правленного кода
+        if line in range(1, 3):
+            return True
+        return False
+
+# 13
+def fizzbuzz(n: int) -> List[str]:
+    # добавил проверку значения переменной
+    if not n >= 0:
+        raise ValueError("n must be >= 0")
+    if not isinstance(n, int):
+        raise ValueError("n must be exact integer")
+    # конец правки
+    for i in range(1, n + 1):
+        yield ([str(i), "buzz", "fizz", "fizzbuzz"][2 * (i % 3 == 0) + (i % 5 == 0)])
+
+# 14
+def custom_range(iterable, *args):
+    # i = 0  # было
+    # stop_activated = False  # было
+    start, stop, step = validate_data(iterable, *args)
+    # start_activated = False if start else True  # было
+    result = []
+    ...
+    i = 0  # переместил переменные в более подходящее место
+    stop_activated = False  # тоже
+    start_activated = False if start else True  # тоже
+    while True:
+        try:
+            value = next(iterator)
+        except StopIteration:
+            break
+        if value == stop:
+            stop_activated = True
+        if value == start:
+            start_activated = True
+        if i % step == 0 and start_activated is True and stop_activated is False:
+            if not isinstance(iterable, dict):
+                result.append(value)
+            else:
+                result.append((value, iterable[value]))
+        i += 1
+    return result
+
+# 15
+def test_post_model(self):
+    model_fields = Post._meta.fields
+    text_field = search_field(model_fields, 'text')
+    # pub_date_field = search_field(model_fields, 'pub_date')  # было
+    # author_field = search_field(model_fields, 'author_id')  # было
+
+    assert text_field is not None, 'Добавьте название события `text` модели `Post`'
+    assert type(text_field) == fields.TextField, \
+        'Свойство `text` модели `Post` должно быть текстовым `TextField`'
+
+    pub_date_field = search_field(model_fields, 'pub_date')  # переместил к месту использования переменной
+    assert pub_date_field is not None, 'Добавьте дату и время проведения события `pub_date` модели `Post`'
+    assert type(pub_date_field) == fields.DateTimeField, \
+        'Свойство `pub_date` модели `Post` должно быть датой и время `DateTimeField`'
+    assert pub_date_field.auto_now_add, 'Свойство `pub_date` модели `Post` должно быть `auto_now_add`'
+
+    author_field = search_field(model_fields, 'author_id')  # перместил к месту использования переменной
+    assert author_field is not None, 'Добавьте пользователя, автор который создал событие `author` модели `Post`'
+    assert type(author_field) == fields.related.ForeignKey, \
+        'Свойство `author` модели `Post` должно быть ссылкой на другую модель `ForeignKey`'
+    assert author_field.related_model == get_user_model(), \
+        'Свойство `author` модели `Post` должно быть ссылкой на модель пользователя `User`'
