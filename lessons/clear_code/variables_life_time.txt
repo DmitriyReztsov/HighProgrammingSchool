@@ -1,0 +1,364 @@
+# 1
+class Cache(object):
+    def __init__(self):
+        self.keys = []
+        self.values = []
+
+# cache = Cache()  # было
+
+def cache(func: Callable) -> Callable:
+    cache = Cache()  # минимизировал область видимости переменной
+
+    def wraper(*args, **kwargs):
+        nonlocal cache  # вместо глобальной переменной использую нелокальную
+        try:
+            key = cache.keys.index((args, kwargs))
+            result = cache.values[key]
+        except ValueError:
+            result = func(*args, **kwargs)
+            cache.keys.append((args, kwargs))
+            cache.values.append(result)
+        return result
+
+    return wraper
+
+# 2, 3
+def tic_tac_toe_checker(board: List[List]) -> str:
+    if not validate(board):
+        raise ValueError("ERROR : you're playing smth else, not Tic-Tac-Toe !")
+    board_vert = [[board[i][j] for i in range(3)] for j in range(3)]
+    board_diag = [[board[i][i] for i in range(3)], [board[2 - i][i] for i in range(3)]]
+
+    """ вынесен в отдельную функцию, чтоб меньше было окно уязвимости
+    result = []
+    for line in boards:
+        chars = defaultdict(int)
+        for char in line:
+            chars[char] += 1
+        result.append(check_win_line(chars))
+    result_horizontal = check_win_board(result)
+    """
+    result_horizontal = parse_combinations(board)  # вместо большого кода - одна строчка с использованием переменной board
+
+    """ то же самое + это повторяющийся код
+    result = []
+    for line in board_vert:
+        chars = defaultdict(int)
+        for char in line:
+            chars[char] += 1
+        result.append(check_win_line(chars))
+    result_vertical = check_win_board(result)
+    """
+    result_vertical = parse_combinations(board_vert)  # испольование переменной board_vert
+    ...
+
+# 4
+def merge_sorted_files(file_list):
+    data_row = []
+    for file in file_list:
+        with open(file) as data_file:
+            data_from_file = data_file.readlines()
+
+            """ вынесен блок связанного с переменными data_from_file и data_row в отдедльную функцию
+            data_row = []
+            index_1 = 0
+            index_2 = 0
+            while index_1 < len(data_row) and index_2 < len(data_from_file):
+                if int(data_row[index_1]) < int(data_from_file[index_2]):
+                    insert_element = int(data_row[index_1])
+                    index_1 += 1
+                elif int(data_row[index_1]) >= int(data_from_file[index_2]):
+                    insert_element = int(data_from_file[index_2])
+                    index_2 += 1
+                data_row.append(insert_element)
+            if index_1 < len(data_row):
+                data_row.extend(data_row[index_1:])
+            elif index_2 < len(data_from_file):
+                data_row.extend(data_from_file[index_2:])
+            """
+
+            data_row = merge_sort(data_row, data_from_file)  # добавил обращение к функции
+    data_row_int = list(map(int, data_row))
+    return CustomIterator(data_row_int)
+
+# 5
+def heap_sort(array):
+    sorted = []
+    """ вынес в отдельную функции, чтобы сократить окно уязвимости для переменных sorted и b_tree
+    b_tree = []
+    for index, elem in enumerate(array):
+        b_tree.append(elem)
+        parent_index = index // 2 + index % 2 - 1
+        while b_tree[parent_index] > b_tree[index] and parent_index >= 0:
+            b_tree[parent_index], b_tree[index] = b_tree[index], b_tree[parent_index]
+            index = parent_index
+            parent_index = index // 2 + index % 2 - 1
+    """
+    b_tree = balanced_tree(array)  # добавил обращение к отдельной функции
+    while b_tree:
+        head = b_tree[0]
+        b_tree[0] = b_tree[-1]
+        parent_index = 0
+        while parent_index * 2 + 2 < len(b_tree):
+            min_child_index = parent_index * 2 + 1
+            if b_tree[parent_index * 2 + 2] < b_tree[min_child_index]:
+                min_child_index = parent_index * 2 + 2
+            if b_tree[parent_index] > b_tree[min_child_index]:
+                b_tree[parent_index], b_tree[min_child_index] = b_tree[min_child_index], b_tree[parent_index]
+                parent_index = min_child_index
+            else:
+                break
+        b_tree.pop()
+        sorted.append(head)
+    return sorted
+
+# 6
+def restore_spends(dp, n, optimal_index, price_list):
+    get = []
+    give = []
+    for i in range(n-1, 0, -1):
+        left = max(0, optimal_index - 1)
+        right = min(n + 1, optimal_index + 2)
+        slice = dp[i][left:right]
+        new_optimal_list_1 = [j for j, v in enumerate(slice) if v == dp[i+1][optimal_index]]
+        minimum_value = dp[i+1][optimal_index] - price_list[i]
+        new_optimal_list_2 = [j for j, v in enumerate(slice) if v == minimum_value]
+
+        """ выделил в отдельную функцию для уменьшения окна уязвимости для переменных выше
+        if new_optimal_list_1 and new_optimal_list_2:
+            new_optimal = min(new_optimal_list_1[-1], new_optimal_list_2[-1])
+        elif new_optimal_list_2:
+            new_optimal = new_optimal_list_2[-1]
+        elif new_optimal_list_1:
+            new_optimal = new_optimal_list_1[-1]
+        new_optimal = new_optimal if left ==0 and right <=2 else new_optimal + optimal_index - 1
+        """
+        new_optimal = (
+            find_new_optimal(new_optimal_list_1, new_optimal_list_2)
+            if left ==0 and right <=2
+            else new_optimal + optimal_index - 1
+        )  # добавил строчку
+
+        if new_optimal > optimal_index:
+            give.append(i+1)
+        elif new_optimal < optimal_index:
+            get.append(i+1)
+        optimal_index = new_optimal
+    used = len(give)
+    return used, reversed(give)
+
+# 7, 8
+def subsequence(m, m_sequence, n, n_sequence):
+    dp = []
+    [dp.append([None] * n) for _ in range(m)]
+    """ вынес в отдельную фунцию
+    found = False
+    for n_index, n_elem in enumerate(n_sequence):
+        if n_elem == m_sequence[0]:
+            dp[0][n_index] = 1
+            found = True
+        if found:
+            dp[0][n_index] = 1
+        else:
+            dp[0][n_index] = 0
+    """
+    
+    """ так же вынес в ту же фунцию для предзаполнения массивов
+    found = False
+    for m_index, m_elem in enumerate(m_sequence):
+        if m_elem == n_sequence[0]:
+            dp[m_index - 1][0] = 1
+            found = True
+        if found:
+            dp[m_index - 1][0] = 1
+        else:
+            dp[m_index - 1][0] = 0
+    """
+    for m_index, n_line in enumerate(dp):
+        for n_index, n_value in enumerate(n_line):
+            if m_index == 0 or n_index == 0:
+                continue
+            elif n_sequence[n_index] == m_sequence[m_index]:
+                prev_value = dp[m_index - 1][n_index - 1]
+            else:
+                prev_value = max(dp[m_index - 1][n_index], dp[m_index][n_index - 1])
+
+            dp[m_index][n_index] = (
+                prev_value + 1
+                if n_sequence[n_index] == m_sequence[m_index]
+                else prev_value
+            )
+    ... дальше логика с заполненными массивами
+
+# 9
+def coherence(num_vertex, num_edge, edges_list):
+    """ вынес блок связанного кода в отедльную функцию
+    adjacency_list = [[] for _ in range(num_vertex + 1)]
+    for vertex_1, vertex_2 in edges_list:
+        adjacency_list[vertex_1].append(vertex_2)
+        if vertex_1 != vertex_2:
+            adjacency_list[vertex_2].append(vertex_1)
+    """
+    adjacency_list = get_adjacency(num_vertex, num_edge, edges_list)  # вызов вынесенной функции для улучшения читаемости
+
+    visited = [None] * (num_vertex + 1)
+    visited[0] = -1
+    now = 1
+    ret = []
+    group = 1
+    while now <= num_vertex:
+        if visited[now] is not None:
+            now += 1
+            continue
+        group_list = []
+        dfs(adjacency_list, visited, now, group, group_list)
+        ret.append(group_list)
+        now += 1
+        group += 1
+    return ret
+
+# 10
+def find_min(n):
+    lcm_min = (n // 2)*(n - n // 2)
+    x_min = n // 2
+    y_min = n - n // 2
+    for y in range(1, n // 2 + 1):
+        x = n - y
+
+        """ вынес в отдельную функцию, чтоб не потерять переменную lcm
+        if x > y:
+            greater = x
+        else:
+            greater = y
+        while(True):
+            if((greater % x == 0) and (greater % y == 0)):
+                lcm = greater
+                break
+            greater += 1
+        """
+
+        lcm = calc_lcm(x, y)  # заменил этой строчкой
+
+        if lcm < lcm_min:
+            lcm_min = lcm
+            x_min = x
+            y_min = y
+    return y_min, x_min
+
+# 11
+def calc_diff(n, operations, figures):
+    """ вынес связанный код в отедльную функцию для лучшей читаемости и уменьшения окна уязвимости ля переменной figures
+    prepared_list = []
+    for fig in figures:
+        to_prepare = fig
+        mod = 0
+        while to_prepare:
+            unit = to_prepare % 10
+            prepared_list.append((unit * 10 ** mod, mod))
+            to_prepare = to_prepare // 10
+            mod += 1
+
+    prepared_list = sorted(prepared_list, key=lambda k: (-k[1], k[0]))
+    
+    """
+    prepared_list = prepare_list(figures)
+    diff = 0
+    for fig, mod in prepared_list:
+        if (fig // 10 ** mod) != 9:
+            _fig = 9 * 10 ** mod
+            diff += _fig - fig
+            fig = _fig
+            if (operations := operations - 1) == 0:
+                break
+    return diff
+
+# 12
+def numbers_generator(l, r):
+    """ вынес блок кода в отедльную функцию
+    number = l
+    while not check_condition(number) and number <= r:
+        mod = len(str(number)) - 1
+        first_digit = number // 10 ** mod
+        if first_digit == max(map(int, list(str(number)))):
+            number = first_digit * sum(list(10**i for i in range(mod + 1)))
+        else:
+            number = (first_digit + 1) * sum(list(10**i for i in range(mod + 1)))
+    """
+    number = find_pivot(l, r)  # вынес связанный с переменной number код в отдельную функцию
+
+    while number <= r:
+        yield number
+        mod = len(str(number)) - 1
+        addition = sum(list(10**i for i in range(mod + 1)))
+        number += addition
+        number = find_pivot(number, r)
+
+# 13
+def check_route(links_nodes):
+    """ вынес в отдельную функцию
+    steps = 1
+    while links_nodes[1].outcomings != 1:
+        ...
+        steps += 1
+        node = links_nodes[links_nodes[1].outcomings]
+    """
+
+    steps = _check_route(links_nodes[1], links_nodes)  # добавил обращение к отдельной функции
+    ...
+    ...
+    if steps == len(links_nodes):
+        return True
+    return False
+
+# 14
+if __name__ == "__main__":
+	with open("input_ya_contest_E.txt") as input_file:
+		data = input_file.readlines()
+		num_cities = int(data[0])
+		coords = [tuple(map(int, coord.split())) for coord in data[1:-2]]
+		refuel = int(data[-2])
+		route = tuple(map(int, data[-1].split()))
+
+    """ вынес связанный код в отдельную функцию - от формирования до обращения к переменной distances большое окно
+	distances = {}
+	for index_from, city in enumerate(coords, 1):
+		for index_to, dest in enumerate(coords, 1):
+			if index_from != index_to:
+				distances[(index_from, index_to)] = abs(city[0] - dest[0]) + abs(city[1] - dest[1])
+    """
+		distances = get_distances(coords)  # добавил обращение к новой функции
+		...
+		days_total = find_ways(distances, refuel, route, [])
+        ...
+
+# 15
+def optimun_way(fees_table, n, m):
+    dp = [
+        [0] * (m + 1)
+    ]
+    dp.extend([
+        [0] for _ in range(n)
+    ])
+    directions = []
+    for r, fees_row in enumerate(fees_table, 1):
+        dp_row = dp[r]
+        direction_row = []
+        for c, fee in enumerate(fees_row, 1):
+
+            """ вынес связанный код в отедльную функцию
+            index_1 = (r, c-1)
+            index_2 = (r-1, c)
+            if dp[index_1[0]][index_1[1]] > dp[index_2[0]][index_2[1]]:
+                value = dp[index_1[0]][index_1[1]]
+                direction = "R"
+            else:
+                value = dp[index_2[0]][index_2[1]]
+                direction = "D"
+            """
+            from_cel, direction = my_max(dp, (r, c-1), (r-1, c))  # обращение к нвой функции
+
+            ...
+            dp_row.append(from_cel + fee)
+            direction_row.append(direction)
+        directions.append(direction_row)
+    return dp[n][m], directions
