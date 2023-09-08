@@ -1,0 +1,67 @@
+# 1
+class DynArray:
+    ...
+    def insert(self, i: int, itm: Any) -> None:
+        ...
+        # можно было бы переписать как перекладывание последовательно элементов из одного массива в другой
+        # без обращаения к конкретным индексам
+        # for index in range(self.count, i, -1):
+        #     self.array[index] = self.array[index - 1]
+        # self.array[i] = itm
+        for index, element in enumarate(self.array):
+            if index == i:
+                new_array.append(itm)
+            new_array.append(element)
+        ...
+
+# 2
+# в Django обычно все операции над кверисетами выполняются либо через фильтрацию, либо через последовательный перебор записей
+for epp_payment in EarlyPayPayment.objects.all():
+        epp_id = epp_payment.early_pay_id
+        if not EPPRequest.objects.filter(id=epp_id).exists():
+            epp_payment.mark_deleted()
+
+# 3
+class Dequeue:
+    ...
+    # можно заменить получение элементов из очереди по индексу на получение через итерацию по списку
+    # больше сложность, но меньше зависимость от поддержания индексов
+    def front(self):
+        # return self.dequeue[self.head] if self.length > 0 else self.error()
+        for element in self.dequeue:
+            return element
+        return self.error()
+
+    def back(self):
+        # return self.dequeue[self.tail] if self.length > 0 else self.error()
+        last_element = None
+        for element in self.dequeue:
+            last_element = element
+        return last_element if last_element is not None else self.error()
+
+# 4
+# как правило, итерируюсь по последовательностям через enumarate(), а не через перебор индексов
+for n_index, n_elem in enumerate(n_sequence):
+    if n_elem == m_sequence[0]:
+        dp[0][n_index] = 1
+        found = True
+    if found:
+        dp[0][n_index] = 1
+    else:
+        dp[0][n_index] = 0
+
+# 5
+def parsing_editor(string: str) -> str:
+    del_char = 0
+    result = []
+    # заменил итерирование по индексу на итерирование по реверснутой последовательности
+    # for index in range(len(string), 0, -1):
+    #     char = string(index-1)
+    for char in reversed(string):
+        if char == "#":
+            del_char += 1
+            continue
+        if del_char == 0:
+            result.append(char)
+        del_char -= 1 if del_char > 0 else del_char
+    return "".join(reversed(result))
