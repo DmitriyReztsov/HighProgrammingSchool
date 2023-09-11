@@ -1,0 +1,180 @@
+# 3.1
+# 1
+class DocumentProjectStatus(str, Enum):
+    EXECUTED = "executed"  # signed from both sides
+    SENT = "sent"  # document was sent by gc after creation
+    SIGNED = "signed"  # document was signed by sc before gc signature
+    EDITED = "edited"  # document is in process of changing document by sc before request approval
+    DRAFT = "draft"  # draft created by gc
+    INTERNAL = "internal_approval"  # document is in internal workflow of gc
+    PENDING_APPROVAL = "pending_approval"  # document is in gc approval process after edition request from sc side
+    PENDING_DOCUMENT = "pending_document"  # not used?
+    REVIEWED = "reviewed"  # after gc review and sending for signature without further discussion
+    PENDING_COUNTERPART_REVIEW = "pending_review"  # after edition of gc while sc is revieweing changes
+    JUST_OPEN = "just_open"  # for indication of opened document only, do not set it in document_project
+    REJECTED = "rejected"  # if any workflow step (during approval and edition as well) turns into rejected status
+
+# 2
+def _validate_index(self, i: int, from_insert: bool = False) -> int:
+    # границы валидных индексов от 0 до (количество элементов - 1) - если проврка запрашивается не операцией вставки
+    # либо до (количество элементов (т.е. последний индекс + 1)) - если операция вставки 
+    if i < 0 or i > self.count or (not from_insert and i == self.count):
+        raise IndexError
+    return i
+
+# 3
+# перемещаем вагоны поезда в тупик пока состав не кончится
+    while n > cur + 1 and train[cur] != next_train:
+        end_way.append(train[cur])
+        cur += 1
+
+# 4
+# проверка если в первом слоте все значния стали None, то возвращаем второй слот
+    if all([x is None for x in first.slots]):
+        return "second", i + 1
+
+# 5
+def run(self, params: ActNeededActionDTO, filter_kwargs: Dict) -> List[ActNeededRowValue]:
+        ...
+        filter_entity = filter_kwargs.get("entity")
+        # обработка контрактов если есть доступ и фильтры, либо только доступ
+        if params.can_view_contract_tab and (filter_entity == DashboardEntityTypes.CONTRACT or filter_entity is None):
+            contracts = self._proceed_with_contracts(...)
+
+# 6
+def execute_charge_creation(
+    charge_data: Dict, from_company: Company, to_company: Company, payment: Payment
+) -> (StripeCharge, bool):
+    ...
+        try:
+            stripe_charge = StripeService.create_charge(...)
+        except stripeErrors.InvalidRequestError as e:
+            # в случае ошибки с доступом контрагента необходимо продолжить выполнение и сохранить отложенный платеж
+            if STRIPE_ACH_ERROR not in e.user_message:
+                raise e
+
+# 7
+def make_jsons():
+    ...
+    # 1. Топ 10 компаний с самими дорогими акциями в рублях.
+    with open(os.path.abspath("homework10/current_price_RUR.json"), "w") as file:
+        sorted_dict = sorted(
+            chart_500.items(),
+            key=lambda x: none_vs_int(x[1]["current_price_RUR"], True),
+            reverse=True,
+        )
+        sorted_dict = dict(sorted_dict[:10])
+        json.dump(sorted_dict, file, indent=4, ensure_ascii=False)
+
+    # 2. Топ 10 компаний с самым низким показателем P/E.
+    with open(os.path.abspath("homework10/PE_as_is.json"), "w") as file:
+        sorted_dict = sorted(
+            chart_500.items(), key=lambda x: none_vs_int(x[1]["P/E_as_is"])
+        )
+        sorted_dict = dict(sorted_dict[:10])
+        json.dump(sorted_dict, file, indent=4, ensure_ascii=False)
+    ...
+
+
+# 3.2
+# 1
+class InvoicePaymentFilter(filters.FilterSet):
+    """ было
+    q_gc = filters.CharFilter(method="search_payment")
+
+    def search_payment(self, queryset, name, value):
+        # q_gc - search made by general contractor through subcontractors
+        company_name_filter = (
+            Q(invoice__subcontractor__name__icontains=value)
+            if name == "q_gc"
+            else Q(invoice__project__contractor__name__icontains=value)
+        )
+
+    """
+
+    """ заменил имя перменной на более читаемое, убрал комментарий """
+    subs_for_gc = filters.CharFilter(method="search_payment")
+
+    def search_payment(self, queryset, name, value):
+        company_name_filter = (
+            Q(invoice__subcontractor__name__icontains=value)
+            if name == "subs_for_gc"
+            else Q(invoice__project__contractor__name__icontains=value)
+        )
+    
+
+# 2
+def patch(self, request, *args, **kwargs):
+    verification_status = request.data.get("verification_status", "")
+    plaid_token = stripe_profile.current_plaid_token
+    ...
+    """ было
+    # Same Day Micro-deposits verification
+    if (
+        verification_status == "manually_verified"
+        and plaid_token.auth_type == PlaidToken.SAME_DAY
+        and plaid_token.verification_status == PlaidVerificationStatus.PENDING
+    ):
+        plaid_token.verified()
+    # Plaid required re-login
+    elif plaid_token.login_required:
+        plaid_token.login_required = False
+        plaid_token.save()
+        if stripe_profile.has_stripe_account and not stripe_profile.has_external_account:
+            StripeService.update_external_account(company)
+    """
+
+    """ заменил логику с комментарием на метод с говорящим названием """
+    if same_day_microdeposits_verification(verification_status, plaid_token):
+        plaid_token.verified()
+    elif plaid_token.login_required:
+        plaid_token.login_required = False
+        plaid_token.save()
+        if stripe_profile.has_stripe_account and not stripe_profile.has_external_account:
+            StripeService.update_external_account(company)
+
+# 3
+def send_email_notification_new_echeck_created(
+    instance: Check, called_by_gc: bool, trial_mode_on: bool, processed=False
+) -> None:
+    """ было
+    email_data = {
+        ...
+        # format amount to dollars for email
+        "check_amount": format_usd_currency(instance.amount),
+    }
+    """
+
+    """ переименовал метод форматирования для понимания что он делает """
+    email_data = {
+        ...
+        "check_amount": format_to_dollars_from_cents(instance.amount),
+    }
+
+# 4
+""" было
+instance, created = Commitment.objects.update_or_create(...)
+if created:
+    # if creating a new commitment ensure we are also creating corresponding change order
+    change_order = change_order_df[change_order_df.number == number]
+    ...
+    ChangeOrder.objects.create(**change_order)
+"""
+
+""" вынес логику создания нового инстанса в метод с говорящим названием """
+instance, created = Commitment.objects.update_or_create(...)
+if created:
+    create_correspondance_change_order(instance)
+
+# 5
+def bulk_transform_invoices(gc: Contractor, invoice_df):
+    flat_invoices = invoice_df.to_dict("records")
+    ...
+    """ было
+    for invoice_flat in flat_invoices:
+        invoice_flat["amount"] = float(invoice_flat.get("amount")) * 100.00  # Number is stored in cents
+    """
+
+    """ добавил новый ключ в словарь для более четкого понимания, что мы туда записываем """
+    for invoice_flat in flat_invoices:
+        invoice_flat["amount_in_dollars"] = float(invoice_flat.get("amount")) * 100.00

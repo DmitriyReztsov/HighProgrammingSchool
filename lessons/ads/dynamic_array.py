@@ -40,6 +40,8 @@ class DynArray:
         self.count += 1
 
     def _validate_index(self, i: int, from_insert: bool = False) -> int:
+        # границы валидных индексов от 0 до (количество элементов - 1) - если проврка запрашивается не операцией вставки
+        # либо до (количество элементов (т.е. последний индекс + 1)) - если операция вставки 
         if i < 0 or i > self.count or (not from_insert and i == self.count):
             raise IndexError
         return i
