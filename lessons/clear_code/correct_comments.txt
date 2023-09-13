@@ -1,0 +1,122 @@
+# 1 информативный, прояснения
+
+# to set dependency between fields:
+# 1. add field name in needed tuple above. Order is matter:
+#       dependent fields should be placed below fields they depend on
+# 2. add pair of the fields in fields dependencies by the next way:
+#       dependent field: main field
+fields_dependencies = {
+    "sb_single_limit": "has_surety_bond",
+    "sb_aggregate_limit": "has_surety_bond",
+    "blc_size": "has_bank_line_of_credit",
+    "outstanding_items": "has_outstanding_items",
+}
+
+# 2 прояснения
+
+def get_missing_fields(instance, attributes, ledger_instance=None):
+    has_ledger_completed_status = _check_ledger_has_complete_or_funded_status(ledger_instance)
+    if has_ledger_completed_status:
+        return []
+
+    flat_data = {}  # data extracted from nested dicts
+    for attribute in attributes:
+        depend_on = epp_request_attributes.fields_dependencies.get(attribute, None)
+        if depend_on is None or flat_data[depend_on]:
+            flat_data[attribute] = _get_flat_field_data_by_path(instance, attribute)
+    return flat_data
+
+# 3 прояснение
+
+# by default Ledger status is prioritized EPP Request status, but in case of exception - put EPP Request status here
+exceptions_in_priority = [EPPRequest.PAYMENT_SENT]
+
+# 4 предупреждение
+
+def create_epp_ledger_for(epp_request):
+    ...
+
+    sub = epp_request.epp_project.subcontractor
+    # if internal contractor then do not create junk epp
+    if sub.internal:
+        return
+
+# 5 информация, усиление
+
+def get_epp_variables(self, counterpart):
+    return {
+        ...
+        # price is stored in cents, presents in dollars with comma separation
+        "epp.purchase_price": f"{self.purchase_price / 100:,.2f}" if self.purchase_price else None,
+        "epp.invoice_amount": f"{self.invoice_amount / 100:,.2f}" if self.invoice_amount else None,
+        ...
+    }
+
+# 6 информация, усиление
+
+def mark_note_viewed(self, request, *args, **kwargs):
+        user = request.user
+        transaction = self.get_object()
+        mark_transaction_note_viewed_by_user(transaction, user)
+        transaction = self.get_object()  # we need to reload annotations after previous process
+        serializer = self.get_serializer(transaction)
+        return Response(serializer.data)
+
+# 7 информация, прояснение, напоминание
+
+def update_email_invitation_url(template_identifier, dataset, active_campaign=None):
+    ...
+    utm_tags = {}
+    # required tags
+    utm_tags["utm_source"] = active_campaign.utm_source if active_campaign.utm_source is not None else ""
+    utm_tags["utm_medium"] = active_campaign.utm_medium if active_campaign.utm_medium is not None else ""
+    if active_campaign.utm_campaign == UTMTags.EMAIL_TEMPLATE_CAMPAIGN:
+        utm_tags["utm_campaign"] = template_identifier
+    elif active_campaign.utm_campaign is None:
+        utm_tags["utm_campaign"] = ""
+    else:
+        utm_tags["utm_campaign"] = active_campaign.utm_campaign
+    # optional tags
+    if active_campaign.utm_content is not None:
+        utm_tags["utm_content"] = active_campaign.utm_content
+    if active_campaign.utm_term is not None:
+        utm_tags["utm_term"] = active_campaign.utm_term
+
+# 8 TODO
+
+def get_location(self, obj):
+    # TODO Try to find the best solution with pandas
+    address = Project.objects.get(id=obj["id"]).address
+    if address:
+        return address.location
+    return ""
+
+# 9 TODO
+
+class Section(CoreModelMixin):
+    ...
+    active = models.BooleanField(default=True, null=False)
+    # TODO: add ref_model_name, ref_model_id, it is required for attaching a project to the section
+    created_on = models.DateTimeField(...)
+
+# 10 предупреждения, намерения
+
+# to make Celery ON: comment CELERY_TASK_ALWAYS_EAGER above, uncomment below, restart celery and workers containers
+# CELERY_TASK_ALWAYS_EAGER = False
+REDIS_PASSWORD = get_env_var("REDIS_PASSWORD")
+REDIS_HOST = get_env_var("REDIS_HOST")
+
+# 11 TODO
+
+def post(self, request, *args, **kwargs):
+    # TODO: refactor, use serializer, extract fields from InvitationSerializer and SignupSerializer
+    code = request.data.get("code")
+    password = request.data.get("password")
+    confirm_password = request.data.get("confirm_password")
+
+# 12 прояснение, усиление
+
+def get_queryset(self):
+    ...
+    # we should use can_share param here instead of filters because it should be used for brokers as well
+    can_share_filter = self.request.query_params.get("can_share", "").lower() == "true"
