@@ -1,0 +1,172 @@
+# 1 неиспользуемый старый код - удалил
+def bulk_transform_invoices(gc: Contractor, invoice_df):
+    distinct_subcontractors = invoice_df[["subcontractor_name", "subcontractor_external_id"]].to_dict("records")
+    distinct_projects = invoice_df[["project_external_id", "description"]].to_dict("records")
+    # distinct_commitments = invoice_df["commitment"].tolist()
+    flat_invoices = invoice_df.to_dict("records")
+
+# 2 неиспользуемый, неактуальный старый комментарий и закомментированный код 2-хлетней давности - удалил
+for project in distinct_projects:
+    ...
+
+# TODO: commitments must have a project and a subcontactor specified,
+#  we should get unique project_external_id-subcontractor_external_id-commitment grouped values
+#  and create Commitments using these values after distinct_projects and distinct_subcontractors were handled
+# commitments = {}
+# for commitment in distinct_commitments:
+#     commitments[commitment], created = gc.gc_commitments.get_or_create(external_id=commitment)
+
+subcontractors = {}
+for subcontractor in distinct_subcontractors:
+    ...
+
+# 3 неиспользуемый код - удалил
+...
+invoice_df[TexturaFieldNames.GROSS_BILLED] = invoice_df[TexturaFieldNames.GROSS_BILLED] * 100.0
+# invoice_df[TexturaFieldNames.CONSTRAFOR_RETAINAGE_AMOUNT] = invoice_df.amount / 9.0
+invoice_df[TexturaFieldNames.CONSTRAFOR_STATUS] = invoice_df[TexturaFieldNames.CONSTRAFOR_STATUS].str.lower()
+...
+
+# 4 неиспользуемый код, неактуальный комментарий - удалил
+def create_address(self, data):
+    ...
+    address = Address(**data, created_by=self.user, updated_by=self.user)
+    address.save()
+    # TODO: geocode_normalize
+    # address.geocode_normalize()
+    return address
+
+# 5 пример из легаси - слишком много информации, избыточный комментарий, бормотание. Переписал функцию.
+# было
+def get_role(self, obj):
+    role = "undefined"
+    if hasattr(obj, "selected_membership") and obj.selected_membership:
+        return obj.selected_membership.role
+    request = self.context.get("request")
+    if request:
+        company_id = self.context.get("request").user.selected_membership.company_id
+        # TODO The error occurs if the user was added to the field through the admin panel
+        # and it is not associated in any way with the company, or if the user was deleted from the company.
+        # Maybe we need to add another serializer without a role, since the role is not needed everywhere
+        try:
+            membership = Membership.objects.get(user=obj, company_id=company_id)
+            role = membership.role
+        except ObjectDoesNotExist:
+            pass
+    return role
+
+# стало
+def get_role(self, obj):
+    if hasattr(obj, "selected_membership") and obj.selected_membership:
+        return obj.selected_membership.role
+
+    request = self.context.get("request")
+    role = "undefined"
+    if request:
+        company_id = self.context.get("request").user.selected_membership.company_id
+        membership = Membership.objects.filter(user=obj, company_id=company_id).first()
+        role = membership.role if membership else "undefined"
+    return role
+
+# 6 закомментированный код - удалил
+class CurrentUserView(generics.GenericAPIView, mixins.UpdateModelMixin):
+    # queryset = User.objects.select_related("company__stripe_profile").all()
+    queryset = User.objects.all()
+    ...
+
+# 7 вместо комментария стоило переименовать функцию
+# было
+# Select company.
+request.user.selected_membership = check_membership(request, company_id)
+
+# стало
+request.user.selected_membership = select_company_membership(request, company_id)
+
+# 8 очевидный комментарий-шум, можно немного переименовать переменную для более четкого понимания ее сущности
+# или вынести этот блок кода в метод с говорящим названием
+# было
+# Checking user MembershipRequest in "pending" status
+has_actual_membership_request = MembershipRequest.objects.filter(
+    user=user, status=MembershipRequestStatus.pending
+).exists()
+if has_actual_membership_request:
+    return Response(
+        {
+            "error": errors.PENDING_MEMBERSHIP_REQUEST[1],
+            "code": errors.PENDING_MEMBERSHIP_REQUEST[0],
+        },
+        status=status.HTTP_400_BAD_REQUEST,
+    )
+
+# стало
+def validate_membership_request_status(user):
+    has_pending_membership_request = MembershipRequest.objects.filter(
+        user=user, status=MembershipRequestStatus.pending
+    ).exists()
+    if has_pending_membership_request:
+        return Response(
+            {
+                "error": errors.PENDING_MEMBERSHIP_REQUEST[1],
+                "code": errors.PENDING_MEMBERSHIP_REQUEST[0],
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+# 9 закомментченный старый код - удалил
+def start_extraction(self):
+    # from api_request_manager import tasks as ocr_tasks
+    from constrafor.tasks import ask_coi_copilot_questions
+    from extractor import tasks
+
+    textract_task = tasks.call_textract_coi_file.signature(
+        countdown=3,
+        kwargs={
+            "insurance_file_request_id": str(self.id),
+        },
+    )
+
+    # ocr_task = ocr_tasks.process_file.si(file_id=self.file.id, callback_type=COPILOT)
+    copilot_tasks = ask_coi_copilot_questions.si(insurance_request_id=self.request.id)
+
+# 10 забытый комментарий и закомментированный легаси-код, к которому никто уже не вернется. Удалил.
+if len(rejected_policies) > 0:
+    COIService.notify_sub_policy_rejected(instance, rejected_policies)
+# Disabled till executing separate task.
+# if (user_is_sub or user_is_broker_sub or (can_update_as_sub and is_submitted)) and not is_draft:  # noqa: E800
+#     COIService.notify_gc_about_shared_coi(instance)  # noqa: E800
+return instance
+
+# 11 забытый отладочный принт - удалил
+def get_num_pages(file_path):
+    cmd = f"pdfinfo {file_path} | grep -a 'Pages' | awk '{{print $2}}'"
+    # print(f"File path {file_path} and got pages {os.popen(cmd).read().strip()}")
+    return int(os.popen(cmd).read().strip())
+
+# 12 старый код - удалил
+def get_discount_percentage(self):
+if self.payment_term is None or self.weekly_discount_rate is None:
+    return None
+# return round(100 * self.payment_term * self.weekly_discount_rate / 700, 2)
+return math.ceil(100 * self.payment_term * self.weekly_discount_rate / 7) / 100
+
+# 13 забытые отладочный принты - удалил
+def get_overdue_fee_for(self, balance, start, end=date.today()):
+        days = self.past_due_in_days(start, end)
+        if days <= 0:
+            return 0
+        if balance <= 0:
+            # print(f"  -> @ {start} - {end} --> balance: {balance/100}, days: {days}, fee: n/a")
+            return 0
+        ofr = float(self.overdue_fee_ratio)
+        wdr = float(self.weekly_discount_rate)
+        fee = round(balance * days * ofr * wdr / 7 * 1 / 100)
+        # print(f"  -> @ {start} - {end} --> balance: {balance/100}, days: {days}, fee: {fee/100}")
+        return fee
+
+# 14 комментарий повторяет описание метода, можно удалить без потери смысла.
+# get the text from all lines
+words = page.getTextInReadingOrder() + "\n"
+
+# 15 комментарий излишен - из метода понятно, что происходит. Можно удалить
+# get and store request as a curl statement
+curl = curlify.to_curl(prepared_req)
