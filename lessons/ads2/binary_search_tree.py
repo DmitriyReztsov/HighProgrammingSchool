@@ -22,6 +22,8 @@ class BST:
         self.Root = node  # корень дерева, или None
 
     def _find_node_by_key(self, key: Any, start_node: BSTNode) -> BSTNode:
+        if start_node is None:
+            return None, False, False
         if key == start_node.NodeKey:
             return start_node, True, False
         if key < start_node.NodeKey and not start_node.LeftChild:
@@ -46,6 +48,9 @@ class BST:
     def AddKeyValue(self, key: Any, val: Any) -> bool:
         # добавляем ключ-значение в дерево
         search_result = self.FindNodeByKey(key)
+        if search_result.Node is None:
+            self.Root = BSTNode(key, val)
+            return True
         if search_result.NodeHasKey:
             return False  # если ключ уже есть
         if search_result.ToLeft:
@@ -58,6 +63,8 @@ class BST:
         # ищем максимальный/минимальный ключ в поддереве
         # возвращается объект типа BSTNode
         direction = {True: "RightChild", False: "LeftChild"}[FindMax]
+        if FromNode is None:
+            return None
         while True:
             if getattr(FromNode, direction) is not None:
                 FromNode = getattr(FromNode, direction)

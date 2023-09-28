@@ -57,6 +57,11 @@ def test_search():
     assert result.NodeHasKey is False
     assert result.ToLeft is True
 
+    tree = BST()
+    result = tree.FindNodeByKey(1)
+    assert isinstance(result, BSTFind)
+    assert result.Node is None
+
 
 def test_add():
     tree = BST(root_8)
@@ -85,6 +90,9 @@ def test_add():
     assert added is False
     assert search_after.NodeHasKey is True
 
+    tree = BST()
+    tree.AddKeyValue(8, "8")
+
 
 def test_max_min():
     tree = BST(root_8)
@@ -102,6 +110,12 @@ def test_max_min():
     max_node = tree.FinMinMax(child_14, True)
     min_node = tree.FinMinMax(child_14, False)
     assert max_node.NodeValue == min_node.NodeValue == "14"
+
+    tree = BST()
+    max_node = tree.FinMinMax(tree.Root, True)
+    min_node = tree.FinMinMax(tree.Root, False)
+    assert max_node is None
+    assert min_node is None
 
 
 def test_delete():
@@ -145,6 +159,10 @@ def test_delete():
     assert child_10.LeftChild is None
     assert child_9.Parent is None
     assert tree.Root is child_9
+
+    tree = BST()
+    deleted = tree.DeleteNodeByKey(1)
+    assert deleted is False
 
 
 def test_count_tree():
