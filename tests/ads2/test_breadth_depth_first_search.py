@@ -103,3 +103,18 @@ def test_depth_first_search():
         child_14,
     ]
     assert depth_list == reference_list
+
+
+def test_star():
+    from lessons.ads2.breadth_depth_first_search_star import BST
+
+    tree = BST(root_8)
+    tree.invert_tree()
+
+    assert tree.Root is root_8
+    assert root_8.LeftChild is child_12
+    assert root_8.RightChild is child_4
+    assert root_8.LeftChild.LeftChild is child_14
+    assert root_8.LeftChild.RightChild.RightChild is child_9
+    assert root_8.LeftChild.LeftChild.LeftChild is None
+    assert root_8.LeftChild.LeftChild.RightChild is None
