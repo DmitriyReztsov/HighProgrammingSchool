@@ -31,6 +31,8 @@ class SimpleGraph:
     # здесь и далее, параметры v -- индекс вершины
     # в списке  vertex
     def RemoveVertex(self, v: Vertex) -> None:
+        if not v in self.vertex:
+            return
         # ваш код удаления вершины со всеми её рёбрами
         for vert in self.vertex:
             self.RemoveEdge(v, vert)
@@ -46,7 +48,7 @@ class SimpleGraph:
 
     def IsEdge(self, v1: Vertex, v2: Vertex) -> bool:
         # True если есть ребро между вершинами v1 и v2
-        if not (v1 in self.vertex and v1 in self.vertex):
+        if not (v1 in self.vertex and v2 in self.vertex):
             return False
         index_1 = self.vertex.index(v1)
         index_2 = self.vertex.index(v2)
@@ -57,12 +59,16 @@ class SimpleGraph:
         )
 
     def AddEdge(self, v1: Vertex, v2: Vertex) -> None:
+        if not (v1 in self.vertex and v2 in self.vertex):
+            return
         # добавление ребра между вершинами v1 и v2
         index_1 = self.vertex.index(v1)
         index_2 = self.vertex.index(v2)
         self.m_adjacency[index_1][index_2] = self.m_adjacency[index_2][index_1] = 1
 
     def RemoveEdge(self, v1: Vertex, v2: Vertex) -> None:
+        if not (v1 in self.vertex and v2 in self.vertex):
+            return
         # удаление ребра между вершинами v1 и v2
         index_1 = self.vertex.index(v1)
         index_2 = self.vertex.index(v2)
