@@ -8,6 +8,7 @@ async def task1():
     await asyncio.sleep(1)
     print("Задача 1 завершилась")
 
+
 async def task2():
     print("Начинаем задачу 2")
     await asyncio.sleep(2)
@@ -15,12 +16,14 @@ async def task2():
     await asyncio.sleep(2)
     print("Задача 2 завершилась")
 
+
 async def task3():
     print("Начинаем задачу 3")
     await asyncio.sleep(3)
     print("Привет из корутины task3")
     await asyncio.sleep(3)
     print("Задача 3 завершилась")
+
 
 async def main():
     task_1 = asyncio.create_task(task1())
@@ -30,5 +33,6 @@ async def main():
     await task_1
     await task_2
     await task_3
+
 
 asyncio.run(main())
