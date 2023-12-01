@@ -158,3 +158,19 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+
+lessons/async_python/files.zip
+lessons/async_python/10_9_files/
+lessons/async_python/coroutine_n_task.py
+lessons/async_python/cpu_task.py
+lessons/async_python/garbage.py
+lessons/async_python/io_tasks.py
+lessons/async_python/try_tasks_in_line.py
+lessons/async_python/try.py
+lessons/async_python/try2.py
+lessons/async_python/chat_log.zip
+lessons/async_python/5000csv.zip
+lessons/async_python/5000folder.zip
+lessons/async_python/auto.zip
+lessons/async_python/logs.zip
+lessons/async_python/region_student.zip
