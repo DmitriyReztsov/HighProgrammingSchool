@@ -44,7 +44,7 @@ async def main():
         dt_log_time = datetime.strptime(log_entry["Время и дата"], "%Y-%m-%d %H:%M:%S")
         log_entry["Время и дата"] = datetime.strftime(dt_log_time, "%d.%m.%Y %H:%M:%S")
     headers = result_jsons[0].keys()
-    async with aiofiles.open(csv_file_path, mode="w", encoding="utf-8-sig") as file:
+    async with aiofiles.open(csv_file_path, mode="w", newline="", encoding="utf-8-sig") as file:
         writer = aiocsv.AsyncDictWriter(file, headers, dialect="customDialect")
         await writer.writeheader()
         await writer.writerows(result_jsons)
