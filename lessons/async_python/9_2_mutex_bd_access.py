@@ -1,7 +1,6 @@
 import asyncio
 import random
 
-
 # Общий ресурс - база данных
 database = []
 Schritt = 0

@@ -1,10 +1,6 @@
 import asyncio
-from _5_6_space_research_data import (
-    sensors,
-    test_type,
-    space_data,
-    space_time,
-)
+
+from _5_6_space_research_data import sensors, space_data, space_time, test_type
 
 
 async def sensor_data(sensor_name):

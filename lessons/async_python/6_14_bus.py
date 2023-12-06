@@ -1,7 +1,6 @@
 import asyncio
 import json
 
-
 passengers = [
     {"Name": "John", "Age": 25, "Speed": 3, "Job": "Engineer"},
     {"Name": "Sarah", "Age": 32, "Speed": 6, "Job": "Doctor"},

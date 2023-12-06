@@ -1,6 +1,5 @@
 import asyncio
 
-
 # Имена пользователей
 users = ["Alice", "Bob", "Charlie", "Dave", "Eva", "Frank", "George", "Helen", "Ivan", "Julia"]
 condition = asyncio.Condition()

@@ -1,7 +1,6 @@
 import asyncio
 from functools import partial
 
-
 codes = [
     "56FF4D",
     "A3D2F7",

@@ -1,11 +1,11 @@
-import aiocsv
-import csv
-import aiofiles
 import asyncio
+import csv
 import json
-from aiofiles import os as aos
 from collections import defaultdict
 
+import aiocsv
+import aiofiles
+from aiofiles import os as aos
 
 result_dict = defaultdict(int)
 result_locker = asyncio.Lock()

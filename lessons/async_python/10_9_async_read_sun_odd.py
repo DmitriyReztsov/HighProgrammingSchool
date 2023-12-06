@@ -1,6 +1,7 @@
+import asyncio
+
 import aiofiles
 import aiofiles.os as aos
-import asyncio
 
 
 async def process_file(file_path: str) -> int:

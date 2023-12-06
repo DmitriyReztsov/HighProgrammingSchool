@@ -2,7 +2,6 @@ import asyncio
 import itertools
 import random
 
-
 shapes = ["circle", "star", "square", "diamond", "heart"]
 colors = ["red", "blue", "green", "yellow", "purple"]
 actions = ["change_color", "explode", "disappear"]

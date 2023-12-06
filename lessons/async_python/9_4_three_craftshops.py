@@ -1,6 +1,5 @@
 import asyncio
 
-
 stone_resources_dict = {
     "Каменная плитка": 10,
     "Каменная ваза": 40,

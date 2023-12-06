@@ -1,7 +1,6 @@
 import asyncio
 import random
 
-
 robot_names = ["Электра", "Механикс", "Оптимус", "Симулакр", "Футуриус"]
 
 visit_counter = 0

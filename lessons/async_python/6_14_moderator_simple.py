@@ -1,7 +1,6 @@
 import asyncio
 import string
 
-
 banned_words = [
     "ошибка",
     "баг",

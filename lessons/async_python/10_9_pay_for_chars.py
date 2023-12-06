@@ -1,11 +1,11 @@
-import aiofiles
-import aiofiles.os as aos
 import asyncio
 import json
 import sys
 from collections import defaultdict
 from pprint import pprint
 
+import aiofiles
+import aiofiles.os as aos
 
 path = "HighProgrammingSchool/lessons/async_python/10_9_files/chat_log"
 char_price = 3  # in cents

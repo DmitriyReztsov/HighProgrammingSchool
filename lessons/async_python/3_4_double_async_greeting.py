@@ -1,6 +1,5 @@
 import asyncio
 
-
 # async def coro_i(i: int) -> None:
 #     another_coro_i = {1:2, 2:1}[i]
 #     print(f"coro_{i} says, hello coro_{another_coro_i}!")

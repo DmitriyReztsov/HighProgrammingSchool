@@ -1,6 +1,5 @@
 import asyncio
 
-
 max_counts = {
     "Counter 1": 13,
     "Counter 2": 7,

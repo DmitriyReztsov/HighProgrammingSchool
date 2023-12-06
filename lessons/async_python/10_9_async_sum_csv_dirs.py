@@ -1,6 +1,7 @@
+import asyncio
+
 import aiocsv
 import aiofiles
-import asyncio
 from aiofiles import os as aos
 
 

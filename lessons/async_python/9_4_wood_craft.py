@@ -1,6 +1,5 @@
 import asyncio
 
-
 wood_resources_dict = {
     "Деревянный меч": 6,
     "Деревянный щит": 12,

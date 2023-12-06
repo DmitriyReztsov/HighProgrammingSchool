@@ -1,7 +1,6 @@
 import asyncio
 import random
 
-
 # Список сообщений чата
 messages = []
 number_messages = 0

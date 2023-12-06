@@ -1,6 +1,5 @@
 import asyncio
 
-
 INIT_TIME = 2
 
 

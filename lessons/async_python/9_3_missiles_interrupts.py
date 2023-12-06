@@ -1,7 +1,6 @@
 import asyncio
 import random
 
-
 error = None
 count = 0
 sek = 0
