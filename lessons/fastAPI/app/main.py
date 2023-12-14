@@ -1,14 +1,34 @@
+from datetime import datetime, timedelta
 from typing import Annotated
 
 import constants
+import jwt
 import services
 import uvicorn
-from fastapi import FastAPI, Header, HTTPException, Request, Response
+from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials, OAuth2PasswordBearer
 from models.models import AuthUser, Feedback, Product, User
 
 my_app = FastAPI()
+security = HTTPBasic()
+SECRET_KEY = "secure_stored_secret_key"
+ALGORITHM = "HS256"
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login_jwt")
+
+# imitations of Data Base
+auth_user_db = [AuthUser(username=user["name"], password=user["password"]) for user in constants.user_db]
+
+
+def get_user_from_auth_user_db(username: str):
+    for user in auth_user_db:
+        if user.username == username:
+            return user
+    return None
+
+
+# end of imitation
 
 
 @my_app.get("/")
@@ -66,8 +86,24 @@ async def search_product(keyword: str, category: str = None, limit: int = 10) ->
     return product_filtered[:limit]
 
 
-@my_app.post("/login")
-async def login(auth_user: AuthUser, response: JSONResponse) -> Response:
+async def authenticate_user(credentials: HTTPBasicCredentials = Depends(security)):
+    user = get_user_from_auth_user_db(credentials.username)
+    if user is None or user.password != credentials.password:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    return user
+
+
+@my_app.post("/login_base")
+async def login_base(auth_user: AuthUser = Depends(authenticate_user)) -> Response:
+    return Response("You got my secret, welcome")
+
+
+@my_app.post("/login_cookie")
+async def login_cookie(auth_user: AuthUser, response: JSONResponse) -> Response:
     found_user_filtered = list(filter(lambda user: user["name"] == auth_user.username, constants.user_db))
     if not found_user_filtered:
         return Response("User not found", 404)
@@ -108,6 +144,45 @@ async def get_headers(
             missed_headers.append("Accept-Language")
         raise HTTPException(status_code=404, detail=f"Header(s) {', '.join(missed_headers)} not found")
     return JSONResponse(content={"User-Agent": user_agent, "Accept-Language": accept_language})
+
+
+def create_jwt_token(data: dict) -> str:
+    data.update({"exp": datetime.utcnow() + timedelta(minutes=1)})
+
+    # кодируем токен, передавая в него наш словарь с тем, что мы хотим там разместить
+    return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
+
+
+@my_app.post("/login_jwt")
+async def login_jwt(user_auth: AuthUser) -> JSONResponse:
+    user = get_user_from_auth_user_db(user_auth.username)
+    if user and user.password == user_auth.password:
+        return JSONResponse(
+            content={"access_token": create_jwt_token({"sub": user_auth.username}), "token_type": "bearer"}
+        )
+    raise HTTPException(detail="Invalid credentials", status_code=401)
+
+
+def get_user_from_token(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])  # декодируем токен
+        # тут мы идем в полезную нагрузку JWT-токена и возвращаем утверждение о юзере (subject);
+        # обычно там еще можно взять "iss" - issuer/эмитент, или "exp" - expiration time - время 'сгорания' и другое,
+        # что мы сами туда кладем
+        return payload.get("sub")
+    except jwt.ExpiredSignatureError:
+        # тут какая-то логика ошибки истечения срока действия токена
+        raise HTTPException(detail="Token expired", status_code=400)
+    except jwt.InvalidTokenError:
+        pass  # тут какая-то логика обработки ошибки декодирования токена
+
+
+@my_app.get("/jwt_protected_resource")
+async def get_jwt_protected(current_user: str = Depends(get_user_from_token)):
+    user = get_user_from_auth_user_db(current_user)
+    if user:
+        return Response("Access granted")
+    raise HTTPException(detail="Access denied", status_code=401)
 
 
 if __name__ == "__main__":
