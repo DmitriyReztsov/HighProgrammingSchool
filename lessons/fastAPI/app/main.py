@@ -8,7 +8,12 @@ import uvicorn
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse, JSONResponse
-from fastapi.security import HTTPBasic, HTTPBasicCredentials, OAuth2PasswordBearer
+from fastapi.security import (
+    HTTPBasic,
+    HTTPBasicCredentials,
+    OAuth2PasswordBearer,
+    OAuth2PasswordRequestForm,
+)
 from models.models import AuthUser, Feedback, Product, User
 
 my_app = FastAPI()
@@ -154,7 +159,7 @@ def create_jwt_token(data: dict) -> str:
 
 
 @my_app.post("/login_jwt")
-async def login_jwt(user_auth: AuthUser) -> JSONResponse:
+async def login_jwt(user_auth: Annotated[OAuth2PasswordRequestForm, Depends()]) -> JSONResponse:
     user = get_user_from_auth_user_db(user_auth.username)
     if user and user.password == user_auth.password:
         return JSONResponse(
