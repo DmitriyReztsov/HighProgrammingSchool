@@ -15,6 +15,11 @@ from fastapi.security import (
     OAuth2PasswordRequestForm,
 )
 from models.models import AuthUser, Feedback, Product, User
+from sqlalchemy import create_engine
+
+SQLALCHEMY_DATABASE_URL = "sqlite:///./sql_app.db"
+
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 
 my_app = FastAPI()
 security = HTTPBasic()
