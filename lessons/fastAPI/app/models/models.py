@@ -69,3 +69,9 @@ class TodoRetrieve(BaseModel):
     title: str
     description: str
     completed: bool = False
+
+
+class TodoUpdate(BaseModel):
+    title: str = None
+    description: str = None
+    completed: bool = None

@@ -1,7 +1,9 @@
 import uvicorn
 from database import async_session, engine
 from fastapi import Body, Depends, FastAPI, HTTPException, status
-from models.models import Base, TodoCreate, TodoModel, TodoRetrieve
+from fastapi.responses import JSONResponse
+from models.models import Base, TodoCreate, TodoModel, TodoRetrieve, TodoUpdate
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -33,6 +35,78 @@ async def create_todo(data: TodoCreate = Body(), db: AsyncSession = Depends(get_
         await db.commit()
         await db.refresh(todo)
         return todo
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"{e}: Failed to create user")
+
+
+@my_app.get("/todos/", status_code=status.HTTP_200_OK)
+async def list_todo(db: AsyncSession = Depends(get_db)) -> list[TodoRetrieve]:
+    query = select(TodoModel)
+    try:
+        todo_iter = await db.execute(query)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"{e}: Failed to fetch user from database"
+        )
+    todos = todo_iter.scalars().all()
+    if todos is None:
+        return JSONResponse(content={"message": "Todo was not found."}, status_code=status.HTTP_404_NOT_FOUND)
+    return todos
+
+
+@my_app.get("/todos/{todo_id}", status_code=status.HTTP_200_OK, response_model=TodoRetrieve)
+async def retrieve_todo(todo_id: int, db: AsyncSession = Depends(get_db)) -> TodoRetrieve:
+    query = select(TodoModel).filter(TodoModel.id == todo_id)
+    try:
+        todo_iter = await db.execute(query)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"{e}: Failed to fetch user from database"
+        )
+    todo = todo_iter.scalars().first()
+    if todo is None:
+        return JSONResponse(content={"message": "Todo was not found."}, status_code=status.HTTP_404_NOT_FOUND)
+    return todo
+
+
+@my_app.put("/todos/{todo_id}", status_code=status.HTTP_200_OK, response_model=TodoRetrieve)
+async def update_todo(todo_id: int, data: TodoUpdate = Body(), db: AsyncSession = Depends(get_db)) -> TodoRetrieve:
+    try:
+        todo_current = await db.get(TodoModel, todo_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"{e}: Failed to fetch user from database"
+        )
+    if not todo_current:
+        return JSONResponse(content={"message": "Todo was not found."}, status_code=status.HTTP_404_NOT_FOUND)
+
+    for attr_name, attr_value in data.model_dump().items():
+        if attr_value is None:
+            continue
+        setattr(todo_current, attr_name, attr_value)
+    try:
+        await db.commit()
+        await db.refresh(todo_current)
+        return todo_current
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"{e}: Failed to create user")
+
+
+@my_app.delete("/todos/{todo_id}", status_code=status.HTTP_200_OK, response_model=TodoRetrieve)
+async def delete_todo(todo_id: int, db: AsyncSession = Depends(get_db)) -> TodoRetrieve:
+    try:
+        todo_current = await db.get(TodoModel, todo_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"{e}: Failed to fetch user from database"
+        )
+    if not todo_current:
+        return JSONResponse(content={"message": "Todo was not found."}, status_code=status.HTTP_404_NOT_FOUND)
+
+    try:
+        await db.delete(todo_current)
+        await db.commit()
+        return todo_current
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"{e}: Failed to create user")
 
