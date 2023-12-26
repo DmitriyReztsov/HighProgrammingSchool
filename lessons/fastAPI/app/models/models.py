@@ -1,8 +1,6 @@
 from typing import Optional
 
 from pydantic import BaseModel
-from sqlalchemy import Boolean, Column, Integer, String
-from sqlalchemy.ext.declarative import declarative_base
 
 
 # создаём модель данных, которая обычно расположена в файле models.py
@@ -29,19 +27,6 @@ class Product(BaseModel):
     name: str
     category: str
     price: float
-
-
-# SQLAlchemy models below
-Base = declarative_base()
-
-
-class TodoModel(Base):
-    __tablename__ = "todo"
-
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String)
-    description = Column(String)
-    completed = Column(Boolean, default=False)
 
 
 # SQLite async
