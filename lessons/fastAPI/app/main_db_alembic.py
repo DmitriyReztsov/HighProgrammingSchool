@@ -1,10 +1,10 @@
 import uvicorn
-from exceptions import CustomExceptionA
+from exceptions import CustomExceptionA, UserNameException, username_exception_handler
 from fastapi import Body, Depends, FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from models.db_models import Base, TodoNewModel, async_session, engine
-from models.exceptions_models import CustomException as CustomExceptionModel
-from models.models import TodoCreate, TodoRetrieve, TodoUpdate
+from models.exceptions_models import CustomExceptionModel
+from models.models_user_validate import TodoCreate, TodoRetrieve, TodoUpdate, User
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -123,6 +123,17 @@ async def read_item(item_id: int):
     if item_id == 42:
         raise CustomExceptionA(detail="Item not found", status_code=444, message="Message")
     return {"item_id": item_id}
+
+
+# register handler
+my_app.add_exception_handler(HTTPException, username_exception_handler)
+
+
+@my_app.post("/user/")
+async def create_users(user: User) -> User:
+    if user.username == "":
+        raise UserNameException(detail="Name cannot be blank.")
+    return user
 
 
 if __name__ == "__main__":
