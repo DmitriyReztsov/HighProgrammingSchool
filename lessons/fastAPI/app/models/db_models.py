@@ -22,6 +22,13 @@ SessionLocal = sessionmaker(autoflush=False, bind=engine)
 Base = declarative_base()
 
 
+""" to make and apply migrations:
+    alembic revision --autogenerate -m "create user table"
+    alembic upgrade head
+
+"""
+
+
 class TodoNewModel(Base):
     __tablename__ = "todonew"
 
@@ -39,3 +46,17 @@ class Product(Base):
     price = Column(Integer)
     count = Column(Integer)
     description = Column(String(length=150))
+
+
+class User(Base):
+    __tablename__ = "user"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String)
+    first_name = Column(String)
+    last_name = Column(String)
+    email = Column(String(length=30), unique=True, index=True)
+    password = Column(String)
+    age = Column(Integer)
+    phone = Column(String(length=12))
+    is_active = Column(Boolean, default=True)

@@ -1,16 +1,20 @@
+from datetime import datetime
+
 import uvicorn
 from exceptions import (
     CustomExceptionA,
-    UserNameException,
+    UserNotFoundException,
     http_exception_handler,
-    username_exception_handler,
+    user_not_found_handler,
 )
 from fastapi import Body, Depends, FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from models.db_models import Base, TodoNewModel, async_session, engine
+from models.db_models import Base, TodoNewModel, User, async_session, engine
 from models.exceptions_models import CustomExceptionModel
-from models.models_user_validate import TodoCreate, TodoRetrieve, TodoUpdate, User
+from models.models_user_validate import TodoCreate, TodoRetrieve, TodoUpdate
+from models.models_user_validate import User as UserValidateModel
+from models.models_user_validate import UserRetrieve
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -132,14 +136,41 @@ async def read_item(item_id: int):
 
 
 # register handler
-my_app.add_exception_handler(HTTPException, username_exception_handler)
+my_app.add_exception_handler(UserNotFoundException, user_not_found_handler)
 my_app.add_exception_handler(RequestValidationError, http_exception_handler)
 
 
-@my_app.post("/user/")
-async def create_users(user: User) -> User:
-    if user.username == "":
-        raise UserNameException(detail="Name cannot be blank.")
+@my_app.post("/user/", status_code=status.HTTP_201_CREATED, response_model=UserRetrieve)
+async def create_user(data: UserValidateModel = Body(), db: AsyncSession = Depends(get_db)) -> UserRetrieve:
+    data.username = data.username or "Undefined Monte-Cristo"
+    user = User(**data.model_dump())
+    db.add(user)
+    try:
+        await db.commit()
+        await db.refresh(user)
+        return user
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"{e}: Failed to create user")
+
+
+@my_app.get("/user/{user_id}", status_code=status.HTTP_200_OK, response_model=UserRetrieve)
+async def retrieve_user(user_id: int, db: AsyncSession = Depends(get_db)) -> UserRetrieve:
+    start_time = datetime.now()
+    query = select(User).filter(User.id == user_id)
+    try:
+        user_iter = await db.execute(query)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"{e}: Failed to fetch user from database"
+        )
+    user = user_iter.scalars().first()
+    if user is None:
+        raise UserNotFoundException(
+            detail="user_id",
+            message="User with user_id was not found.",
+            status_code=status.HTTP_404_NOT_FOUND,
+            headers={"X-ErrorHandleTime": str(datetime.now() - start_time)},
+        )
     return user
 
 
