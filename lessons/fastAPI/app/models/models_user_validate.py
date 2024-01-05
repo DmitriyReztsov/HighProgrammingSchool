@@ -1,6 +1,7 @@
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, conint, constr
+from fastapi.exceptions import RequestValidationError
+from pydantic import BaseModel, EmailStr, conint, constr, validator
 
 
 # создаём модель данных, которая обычно расположена в файле models.py
@@ -10,6 +11,13 @@ class User(BaseModel):
     email: EmailStr
     password: constr(min_length=8, max_length=16)
     phone: Optional[str] = "Unknown"
+
+    @validator("age")
+    @classmethod
+    def validate_age(cls, value):
+        if value > 100:
+            raise ValueError("Столько не живут!")
+        return value
 
 
 class TodoCreate(BaseModel):

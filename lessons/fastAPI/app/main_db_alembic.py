@@ -1,6 +1,12 @@
 import uvicorn
-from exceptions import CustomExceptionA, UserNameException, username_exception_handler
+from exceptions import (
+    CustomExceptionA,
+    UserNameException,
+    http_exception_handler,
+    username_exception_handler,
+)
 from fastapi import Body, Depends, FastAPI, HTTPException, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from models.db_models import Base, TodoNewModel, async_session, engine
 from models.exceptions_models import CustomExceptionModel
@@ -127,6 +133,7 @@ async def read_item(item_id: int):
 
 # register handler
 my_app.add_exception_handler(HTTPException, username_exception_handler)
+my_app.add_exception_handler(RequestValidationError, http_exception_handler)
 
 
 @my_app.post("/user/")
