@@ -1,9 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Annotated
 
-import constants
 import jwt
-import services
 import uvicorn
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response, status
 from fastapi.encoders import jsonable_encoder
@@ -14,8 +12,10 @@ from fastapi.security import (
     OAuth2PasswordBearer,
     OAuth2PasswordRequestForm,
 )
-from models.models import AuthUser, Feedback, Product, User
 from sqlalchemy import create_engine
+
+from . import constants, services
+from .models.models import AuthUser, Feedback, Product, User
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./sql_app.db"
 
@@ -193,6 +193,11 @@ async def get_jwt_protected(current_user: str = Depends(get_user_from_token)):
     if user:
         return Response("Access granted")
     raise HTTPException(detail="Access denied", status_code=401)
+
+
+@my_app.get("/test_sum/")
+async def calculate_sum(a: int, b: int):
+    return {"result": a + b}
 
 
 if __name__ == "__main__":

@@ -1,3 +1,5 @@
+import os
+
 import databases
 from sqlalchemy import Boolean, Column, Integer, String, create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -5,7 +7,10 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # строка подключения
-SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./HighProgrammingSchool/lessons/fastAPI/app/sql_app.db"  # noqa
+if os.getenv("IS_TEST"):
+    SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./app/test.db"
+else:
+    SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./app/sql_app.db"
 
 # для асинхронной Алхимии
 database = databases.Database(SQLALCHEMY_DATABASE_URL)
@@ -15,8 +20,8 @@ engine = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=True)
 async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 # sync engine and Session
-sync_engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(autoflush=False, bind=engine)
+# sync_engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+# SessionLocal = sessionmaker(autoflush=False, bind=engine)
 
 # SQLAlchemy models below
 Base = declarative_base()

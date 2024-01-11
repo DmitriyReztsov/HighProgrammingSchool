@@ -1,3 +1,5 @@
+import os
+
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
@@ -12,7 +14,11 @@ from app.models.db_models import Base
 config = context.config
 
 section = config.config_ini_section
-config.set_section_option(section, "SQLALCHEMY_DATABASE_URL", "sqlite:///./app/sql_app.db")
+if os.getenv("IS_TEST"):
+    path_to_base = "sqlite:///./app/test.db"
+else:
+    path_to_base = "sqlite:///./app/sql_app.db"
+config.set_section_option(section, "SQLALCHEMY_DATABASE_URL", path_to_base)
 fileConfig(config.config_file_name)
 
 # Interpret the config file for Python logging.

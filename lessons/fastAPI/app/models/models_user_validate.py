@@ -1,6 +1,5 @@
 from typing import Optional
 
-from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, EmailStr, conint, constr, validator
 
 

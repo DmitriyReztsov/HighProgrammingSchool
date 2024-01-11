@@ -1,7 +1,7 @@
 from datetime import datetime
 
 import uvicorn
-from exceptions import (
+from app.exceptions import (
     CustomExceptionA,
     UserNotFoundException,
     http_exception_handler,
@@ -10,11 +10,11 @@ from exceptions import (
 from fastapi import Body, Depends, FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from models.db_models import Base, TodoNewModel, User, async_session, engine
-from models.exceptions_models import CustomExceptionModel
-from models.models_user_validate import TodoCreate, TodoRetrieve, TodoUpdate
-from models.models_user_validate import User as UserValidateModel
-from models.models_user_validate import UserRetrieve
+from app.models.db_models import Base, TodoNewModel, User, async_session, engine
+from app.models.exceptions_models import CustomExceptionModel
+from app.models.models_user_validate import TodoCreate, TodoRetrieve, TodoUpdate
+from app.models.models_user_validate import User as UserValidateModel
+from app.models.models_user_validate import UserRetrieve
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -175,6 +175,8 @@ async def retrieve_user(user_id: int, db: AsyncSession = Depends(get_db)) -> Use
 
 
 if __name__ == "__main__":
+    # from fastAPI do: PYTHONPATH=. python app/main_db_alembic.py -m
+    # make startserver PATH_TO_MAIN='app/main_db_alembic.py'
     # console command: uvicorn main:my_app --reload --port 8001
     uvicorn.run(
         "main_db_alembic:my_app",
