@@ -1,22 +1,23 @@
 from datetime import datetime
 
 import uvicorn
+from fastapi import Body, Depends, FastAPI, HTTPException, Request, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.exceptions import (
     CustomExceptionA,
     UserNotFoundException,
     http_exception_handler,
     user_not_found_handler,
 )
-from fastapi import Body, Depends, FastAPI, HTTPException, Request, status
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
 from app.models.db_models import Base, TodoNewModel, User, async_session, engine
 from app.models.exceptions_models import CustomExceptionModel
 from app.models.models_user_validate import TodoCreate, TodoRetrieve, TodoUpdate
 from app.models.models_user_validate import User as UserValidateModel
 from app.models.models_user_validate import UserRetrieve
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 # создаем таблицы

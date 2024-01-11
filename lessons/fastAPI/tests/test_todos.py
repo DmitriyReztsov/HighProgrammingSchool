@@ -1,33 +1,31 @@
-from httpx import AsyncClient
 import pytest
+import pytest_asyncio
+from httpx import AsyncClient
 
-from app.models.db_models import Base, create_async_engine
 from app.main_db_alembic import my_app
+from app.models.db_models import Base, create_async_engine
 
-pytestmark = pytest.mark.asyncios
+# All test coroutines will be treated as marked.
+pytestmark = pytest.mark.asyncio
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./app/test.db"
 
 
-@pytest.mark.asyncio
-@pytest.fixture()
-async def setup_database(scope="session"):
+# @pytest.mark.asyncio
+@pytest_asyncio.fixture(scope="session", autouse=True)
+async def setup_database():
     engine = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=True)
 
     async with engine.begin() as conn:
-        print("1")
         await conn.run_sync(Base.metadata.create_all)
-        print("2")
 
     yield
 
     async with engine.begin() as conn:
-        print("3")
         await conn.run_sync(Base.metadata.drop_all)
-        print("4")
 
 
-@pytest.mark.asyncio
-async def test_get_todos(setup_database):
+# @pytest.mark.asyncio
+async def test_get_todos():
     async with AsyncClient(app=my_app, base_url="http://127.0.0.1") as ac:
         response = await ac.get("/todos/")
     print(">>> response get <<<", response.content)
@@ -36,8 +34,8 @@ async def test_get_todos(setup_database):
     assert response.json() == []
 
 
-@pytest.mark.asyncio
-async def test_create_todo(setup_database):
+# @pytest.mark.asyncio
+async def test_create_todo():
     data = {"title": "Test title", "description": "Test description"}
     async with AsyncClient(app=my_app, base_url="http://127.0.0.1") as ac:
         response = await ac.post("/todos", json=data, headers={"Content-Type": "application/json"})
