@@ -1,0 +1,50 @@
+{
+    "jupyter.completionTriggerCharacters": {
+        
+        "bash": [
+            "$",
+            "{"
+        ],
+        "java": [
+            ".",
+            "@",
+            "#"
+        ],
+        "javascript": [
+            ".",
+            "\"",
+            "'",
+            "/",
+            "@"
+        ],
+        "julia": [
+            "."
+        ],
+        "r": [
+            "[",
+            "(",
+            ",",
+            "$",
+            "@",
+            "\"",
+            "'"
+        ],
+        "rust": [
+            ".",
+            ":"
+        ],
+        "scala": [
+            "."
+        ],
+        "typescript": [
+            ".",
+            "\"",
+            "'",
+            "/",
+            "@",
+            "<"
+        ]
+    },
+    "php.validate.executablePath": "",
+    "editor.hover.enabled": false
+}

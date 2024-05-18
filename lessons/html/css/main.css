@@ -1,0 +1,17 @@
+p {
+    color: crimson
+}
+header {
+    font-size: x-large
+}
+#menu {
+    color: aqua;
+}
+.title {
+    color: greenyellow;
+}
+.news > article > h2 {
+    color: coral;
+    font-size: 24px;
+  }
+  
