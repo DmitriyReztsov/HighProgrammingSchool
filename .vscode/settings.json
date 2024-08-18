@@ -46,5 +46,10 @@
         ]
     },
     "php.validate.executablePath": "",
-    "editor.hover.enabled": false
+    "editor.hover.enabled": false,
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
 }
