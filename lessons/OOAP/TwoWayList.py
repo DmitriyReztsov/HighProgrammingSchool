@@ -1,0 +1,495 @@
+from abc import ABC, abstractmethod
+from typing import TypeVar
+
+Node = TypeVar("Node")
+
+
+class ParentListABC(ABC):
+    CURSOR_POS = 0  # начальное положение курсора
+    HEAD_POS = 0
+    TAIL_POS = 0
+
+    HEAD_NIL: int = 0
+    HEAD_OK: int = 1
+    HEAD_ERR: int = 2
+
+    TAIL_NIL: int = 0
+    TAIL_OK: int = 1
+    TAIL_ERR: int = 2
+
+    RIGHT_NIL: int = 0
+    RIGHT_OK: int = 1
+    RIGHT_ERR: int = 2
+
+    PUT_RIGHT_NIL: int = 0
+    PUT_RIGHT_OK: int = 1
+    PUT_RIGHT_ERR: int = 2
+
+    PUT_LEFT_NIL: int = 0
+    PUT_LEFT_OK: int = 1
+    PUT_LEFT_ERR: int = 2
+
+    REMOVE_NIL: int = 0
+    REMOVE_OK: int = 1
+    REMOVE_ERR: int = 2
+
+    ADD_EMPTY_NIL: int = 0
+    ADD_EMPTY_OK: int = 1
+    ADD_EMPTY_ERR: int = 2
+
+    ADD_TAIL_NIL: int = 0
+    ADD_TAIL_OK: int = 1
+    ADD_TAIL_ERR: int = 2
+
+    REPLACE_NIL: int = 0
+    REPLACE_OK: int = 1
+    REPLACE_ERR: int = 2
+
+    FIND_NIL: int = 0
+    FIND_OK: int = 1
+    FIND_NOK: int = 2
+    FIND_ERR: int = 3
+
+    GET_NIL: int = 0
+    GET_OK: int = 1
+    GET_ERR: int = 2
+
+    # команды
+    @abstractmethod
+    def head() -> None:
+        """
+        предусловия: список не пустой
+        постусловия: курсор - на первый элемент
+
+        """
+        pass
+
+    @abstractmethod
+    def tail() -> None:
+        """
+        предусловия: список не пустой
+        постусловия: курсор на последний элемент
+
+        """
+        pass
+
+    @abstractmethod
+    def right() -> None:
+        """
+        предусловия: список не пустой, справа должен быть узел (курсор стоит не на последнем узле)
+        постусловия: курсор сдвинут на один узел вправо
+
+        """
+        pass
+
+    @abstractmethod
+    def put_right(node: Node) -> None:
+        """
+        предусловие: список не пустой, значение курсора отличное от 0
+        постусловие: справа от текущего узла добавлен новый с заданным значением, необходим пересчет позиции хвоста
+
+        """
+        pass
+
+    @abstractmethod
+    def put_left(node: Node) -> None:
+        """
+        предусловие: список не пустой, значение курсора отличное от 0
+        постусловие: слева от текущего узла добавлен новый с заданным значением, необходим пересчет позиции курсора,
+        чтобы он продолжал указывать на текущий узел, пересчет позиции хвоста
+
+        """
+        pass
+
+    @abstractmethod
+    def remove() -> None:
+        """
+        предусловие: список не пустой, значение курсора отличное от 0
+        постусловие: из списка удален узел, необходим пересчет позиции курсора
+        курсор смещается к правому соседу, если он есть, иначе курсор смещается к левому соседу, если он есть, либо 0
+
+        """
+        pass
+
+    @abstractmethod
+    def clear() -> None:
+        """
+        предусловие: нет
+        постусловие: пустой список, курсор возвращен на дефолтное значение (0)
+
+        """
+        pass
+
+    @abstractmethod
+    def add_to_empty(node: Node) -> None:
+        """
+        предусловие: список пустой, курсор = 0
+        постусловие: в список добавлен узел, значение курсора = 1, указатель на голову и хвост списка
+        установлены также на этот элемент
+
+        """
+        pass
+
+    @abstractmethod
+    def add_tail(node: Node) -> None:
+        """
+        предусловие: список не пустой
+        постусловие: в список добавлен узел, значение курсора изменилось
+
+        """
+        pass
+
+    @abstractmethod
+    def replace(node: Node) -> None:
+        """
+        предусловие: список не пустой, курсор отличен от 0
+        постусловие: в списке изменилось значение текущего узла, значение курсора не изменилось
+
+        """
+        pass
+
+    @abstractmethod
+    def find(node: Node) -> None:
+        """
+        предусловие: список не пустой, курсор отличен от 0
+        постусловие: значение курсора изменилось, курсор должен устанавливаться на СЛЕДУЮЩИЙ справа
+        за текущим узел с искомым значением
+
+        """
+        pass
+
+    @abstractmethod
+    def remove_all(node: Node) -> None:
+        """
+        предусловие: нет
+        постусловие: из списка удалены заданные узлы, значение курсора должно быть пересчитано
+
+        """
+        pass
+
+    # запросы
+    @abstractmethod
+    def get() -> Node:
+        """
+        предусловия: значение курсора должно отличаться от 0, т.е. курсор стоит на узле
+
+        """
+        pass
+
+    @abstractmethod
+    def size() -> int:
+        pass
+
+    @abstractmethod
+    def is_head() -> bool:
+        pass
+
+    @abstractmethod
+    def is_tail() -> bool:
+        pass
+
+    @abstractmethod
+    def is_value() -> bool:
+        pass
+
+    @abstractmethod
+    def get_get_status() -> int:
+        pass
+
+    @abstractmethod
+    def get_head_status() -> int:
+        pass
+
+    @abstractmethod
+    def get_tail_status() -> int:
+        pass
+
+    @abstractmethod
+    def get_right_status() -> int:
+        pass
+
+    @abstractmethod
+    def get_put_right_status() -> int:
+        pass
+
+    @abstractmethod
+    def get_put_left_status() -> int:
+        pass
+
+    @abstractmethod
+    def get_remove_status() -> int:
+        pass
+
+    @abstractmethod
+    def get_add_empty_status() -> int:
+        pass
+
+    @abstractmethod
+    def get_add_tail_status() -> int:
+        pass
+
+    @abstractmethod
+    def get_replace_status() -> int:
+        pass
+
+    @abstractmethod
+    def get_find_status() -> int:
+        pass
+
+
+class LinkedListABC(ParentListABC):
+    # конструктор
+    @abstractmethod
+    def LinkedList() -> "LinkedListABC":
+        """
+        предусловия: нет
+        постусловия: создан новый связный список
+
+        """
+        pass
+
+
+class TwoWayListABC(ParentListABC):
+    LEFT_NIL: int = 0
+    LEFT_OK: int = 1
+    LEFT_ERR: int = 2
+
+    # конструктор
+    @abstractmethod
+    def TwoWayList() -> "TwoWayList":
+        """
+        предусловия: нет
+        постусловия: создан новый двунаправленный связный список
+
+        """
+        pass
+
+    # команды
+    @abstractmethod
+    def left() -> None:
+        """
+        предусловия: список не пустой, слева должен быть узел (курсор стоит не на головном узле)
+        постусловия: курсор сдвинут на один узел влево
+
+        """
+        pass
+
+    # запросы
+    @abstractmethod
+    def get_left_status() -> int:
+        pass
+
+
+class ParentList(ParentListABC):
+    def head(self) -> None:
+        if self._list:
+            self._cursor = self._head
+            self._head_status = self.HEAD_OK
+        else:
+            self._head_status = self.HEAD_ERR
+
+    def tail(self) -> None:
+        if self._list:
+            self._cursor = self._tail
+            self._tail_status = self.TAIL_OK
+        else:
+            self._tail_status = self.TAIL_ERR
+
+    def right(self) -> None:
+        if self._list and self._cursor != self._tail:
+            self._cursor += 1
+            self._right_status = self.RIGHT_OK
+        else:
+            self._right_status = self.RIGHT_ERR
+
+    def put_right(self, node: Node) -> None:
+        if self._list and self._cursor:
+            self._list.insert(self._cursor, node)
+            self._tail += 1
+            self._put_right_status = self.PUT_RIGHT_OK
+        else:
+            self._put_right_status = self.PUT_RIGHT_ERR
+
+    def put_left(self, node: Node) -> None:
+        if self._list and self._cursor:
+            self._list.insert(self._cursor - 1, node)
+            self._cursor += 1
+            self._tail += 1
+            self._put_left_status = self.PUT_RIGHT_OK
+        else:
+            self._put_left_status = self.PUT_RIGHT_ERR
+
+    def _get_new_cursor_deletion(self) -> int:
+        if self._cursor == self._tail:
+            return self._cursor - 1
+        return self._cursor
+
+    def _get_new_head_deletion(self) -> int:
+        if self._cursor == self.CURSOR_POS:
+            return self.HEAD_POS
+        return self._head
+
+    def remove(self) -> None:
+        if self._list and self._cursor:
+            self._list.pop(self._cursor - 1)
+            self._cursor = self._get_new_cursor_deletion()
+            self._tail -= 1
+            self._head = self._get_new_head_deletion()
+            self._remove_status = self.REMOVE_OK
+        else:
+            self._remove_status = self.REMOVE_ERR
+
+    def clear(self) -> None:
+        self._list: list = []
+        self._cursor = self.CURSOR_POS
+        self._head = self.HEAD_POS
+        self._tail = self.TAIL_POS
+
+        self._head_status = self.HEAD_NIL
+        self._tail_status = self.TAIL_NIL
+        self._right_status = self.RIGHT_NIL
+        self._put_right_status = self.PUT_RIGHT_NIL
+        self._put_left_status = self.PUT_LEFT_NIL
+        self._remove_status = self.REMOVE_NIL
+        self._add_empty_status = self.ADD_EMPTY_NIL
+        self._add_tail_status = self.ADD_TAIL_NIL
+        self._replace_status = self.REPLACE_NIL
+        self._find_status = self.FIND_NIL
+        self._get_status = self.GET_NIL
+
+    def add_to_empty(self, node: Node) -> None:
+        if not self._list:
+            self._list.append(node)
+            self._head = 1
+            self._cursor = 1
+            self._tail = 1
+            self._add_empty_status = self.ADD_EMPTY_OK
+        else:
+            self._add_empty_status = self.ADD_EMPTY_ERR
+
+    def add_tail(self, node: Node) -> None:
+        current_cursor = self._cursor
+        self.tail()
+        if self.get_tail_status() == self.TAIL_OK:
+            self.put_right(node)
+        if self.get_tail_status() == self.TAIL_ERR or self.get_put_right_status() == self.PUT_RIGHT_ERR:
+            self._add_tail_status = self.ADD_TAIL_ERR
+        else:
+            self._add_tail_status = self.ADD_TAIL_OK
+        self._cursor = current_cursor
+
+    def replace(self, node: Node) -> None:
+        if self._list and self._cursor:
+            self._list[self._cursor - 1] = node
+            self._replace_status = self.REPLACE_OK
+        else:
+            self._replace_status = self.REPLACE_ERR
+
+    def _find_next(self, node: Node) -> None:
+        self._find_status = self.FIND_NOK
+        while self._cursor < self._tail:
+            self._cursor += 1
+            if self._list[self._cursor - 1] == node:
+                self._find_status = self.FIND_OK
+                break
+
+    def find(self, node: Node) -> None:
+        current_cursor = self._cursor
+        if self._list and self._cursor:
+            self._find_next(node)
+        else:
+            self._find_status = self.FIND_ERR
+        if self._find_status in [self.FIND_ERR, self.FIND_NOK]:
+            self._cursor = current_cursor
+
+    def remove_all(self, node: Node) -> None:
+        self.head()
+        if self.get() == node:
+            self.remove()
+
+        while True:
+            self.find(node)
+            if self._find_status in [self.FIND_ERR, self.FIND_NOK]:
+                break
+            self.remove()
+            if self._remove_status == self.REMOVE_ERR:
+                break
+
+    def get(self) -> Node | int:
+        if self._list and self._cursor:
+            return_value = self._list[self._cursor - 1]
+            self._get_status = self.GET_OK
+            return return_value
+        self._get_status = self.GET_ERR
+        return 0
+
+    def size(self) -> int:
+        return len(self._list)
+
+    def is_head(self) -> bool:
+        return self._cursor == self._head
+
+    def is_tail(self) -> bool:
+        return self._cursor == self._tail
+
+    def is_value(self) -> bool:
+        return bool(self._list) and bool(self._cursor)
+
+    def get_get_status(self) -> int:
+        return self._get_status
+
+    def get_head_status(self) -> int:
+        return self._head_status
+
+    def get_tail_status(self) -> int:
+        return self._tail_status
+
+    def get_right_status(self) -> int:
+        return self._right_status
+
+    def get_put_right_status(self) -> int:
+        return self._put_right_status
+
+    def get_put_left_status(self) -> int:
+        return self._put_left_status
+
+    def get_remove_status(self) -> int:
+        return self._remove_status
+
+    def get_add_empty_status(self) -> int:
+        return self._add_empty_status
+
+    def get_add_tail_status(self) -> int:
+        return self._add_tail_status
+
+    def get_replace_status(self) -> int:
+        return self._replace_status
+
+    def get_find_status(self) -> int:
+        return self._find_status
+
+
+class LinkedList(ParentList):
+    def LinkedList(self) -> "LinkedList":
+        self.clear()
+        return self
+
+
+class TwoWayList(ParentList, TwoWayListABC):
+    def TwoWayList(self) -> "TwoWayList":
+        self.clear()
+        return self
+
+    def clear(self) -> None:
+        super().clear()
+        self._left_status = self.LEFT_NIL
+
+    def left(self) -> None:
+        if self._list and self._cursor != self._head:
+            self._cursor -= 1
+            self._left_status = self.LEFT_OK
+        else:
+            self._left_status = self.LEFT_ERR
+
+    def get_left_status(self) -> int:
+        return self._left_status
