@@ -16,8 +16,7 @@ class DynArray:
         return self.count
 
     def make_array(self, new_capacity: int) -> List:
-        ar = (new_capacity * ctypes.py_object)()
-        return ar
+        return (new_capacity * ctypes.py_object)()
 
     def __getitem__(self, i: int) -> Any:
         if i < 0 or i >= self.count:
@@ -41,7 +40,7 @@ class DynArray:
 
     def _validate_index(self, i: int, from_insert: bool = False) -> int:
         # границы валидных индексов от 0 до (количество элементов - 1) - если проврка запрашивается не операцией вставки
-        # либо до (количество элементов (т.е. последний индекс + 1)) - если операция вставки 
+        # либо до (количество элементов (т.е. последний индекс + 1)) - если операция вставки
         if i < 0 or i > self.count or (not from_insert and i == self.count):
             raise IndexError
         return i
