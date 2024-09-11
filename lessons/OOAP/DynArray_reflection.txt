@@ -1,0 +1,200 @@
+import ctypes
+from abc import ABC, abstractmethod
+from typing import Self, TypeVar
+
+Node = TypeVar("Node")
+
+
+class DynArrayABC(ABC):
+    CURSOR_POS: int = 0  # начальное положение курсора
+    HEAD_POS: int = 0
+    TAIL_POS: int = 0
+    COUNT: int = 0  # начальное количество элементов в массиве
+    CAPACITY: int = 16  # начальная ёмкость массива
+    DOWN_RESIZE_CAPACITY_CONDITION: float = 0.5  # коэфф-т заполненности массива для снижения емкости
+    DOWN_RESIZE_CAPACITY_RATE: float = 1.5  # коэф-т снижения емкости массива
+    UP_RESIZE_CAPACITY_RATE: int = 2  # коэф-т увеличения емкости массива
+    ARRAY: list[ctypes.py_object] = (CAPACITY * ctypes.py_object)()  # начальный массив ячеек
+
+    RESIZE_NIL: int = 0
+    RESIZE_OK: int = 1
+    RESIZE_ERR: int = 2
+
+    APPEND_NIL: int = 0
+    APPEND_OK: int = 1
+    APPEND_ERR: int = 2
+
+    REMOVE_NIL: int = 0
+    REMOVE_OK: int = 1
+    REMOVE_ERR: int = 2
+
+    GET_NIL: int = 0
+    GET_OK: int = 1
+    GET_ERR: int = 2
+
+    # конструктор
+    @abstractmethod
+    def DynArray() -> "DynArrayABC":
+        """
+        предусловия: нет
+        постусловия: создан новый массив
+
+        """
+        pass
+
+    # команды
+    @abstractmethod
+    def _make_array() -> None:
+        """
+        предусловия: нет
+        постусловие: размер массива пересчитан, создан новый массив новой емкости с элементами
+
+        """
+
+    @abstractmethod
+    def append() -> None:
+        """
+        предусловие: хвост не равен емкости, иначе сначала сделать расширение массива
+        постусловие: добавлен новый элемент в хвост списка
+
+        --- тут я недодумал немного. Команду put я не добавил, полагая, что DynArray может выступать как 
+        родительский класс для списков, где уже команды вставок реализованы. Но действительно, надо создавать
+        удобные команды для работы с массивом.
+
+        --- по команде append с одной стороны, для выполнения команды действительно не нужно предусловие,
+        но все-таки какая-то логика для вставки должна быть, чтоб не забыть расширить массив? Или тут речь про то,
+        что реализация скрыта под капотом и пользователю АТД не надо думать о условиях расширения массива? 
+        Логика расширения уходит в реализацию? Тогда да.
+
+        """
+        pass
+
+    @abstractmethod
+    def remove(ind: int) -> None:
+        """
+        предусловие: курсор стоит на узле, индекс - в рамках между головой и хвостом
+        постусловие: удален текущий элемент, хвост не стал равен половине емкости, иначе сделать уменьшение массива
+
+        --- в целом, предусловия и постусловия у меня совпали. Но опять же, критерии расширения и уменьшения массива
+        оказываются за рамками АТД.
+
+        """
+        pass
+
+    # запросы
+    @abstractmethod
+    def get(ind: int) -> Node:
+        """
+        предусловия: предусловие: курсор стоит на узле, индекс - в рамках между головой и хвостом
+
+        """
+        pass
+
+    --- про size не подумал...
+
+    @abstractmethod
+    def get_get_status() -> int:
+        pass
+
+    @abstractmethod
+    def get_append_status() -> int:
+        pass
+
+    @abstractmethod
+    def get_remove_status() -> int:
+        pass
+
+    @abstractmethod
+    def get_resize_status() -> int:
+        pass
+
+    --- resize получается внутренний механизм, не надо его открывать наружу. Это детали реализации. И статус append в
+    решении не указан. По идее да, у нас нет вариантов не вставить в конец списка элемент, если детали реализации
+    изменения емкости мы скрываем.
+
+class DynArray(DynArrayABC):
+    def DynArray(self) -> Self:
+        self._clear()
+        return self
+
+    def _clear(self):
+        self._cursor = self.CURSOR_POS
+        self._head = self.HEAD_POS
+        self._tail = self.TAIL_POS
+
+        self._array: list = self.ARRAY
+        self._capacity = self.CAPACITY
+        self._count = self.COUNT
+
+        self._resize_status = self.RESIZE_NIL
+        self._get_status = self.GET_NIL
+        self._append_status = self.APPEND_NIL
+        self._remove_status = self.REMOVE_NIL
+
+    def _resize_capacity(self) -> None:
+        if self._tail == self._capacity:
+            self._capacity = self._capacity * self.UP_RESIZE_CAPACITY_RATE
+            self._resize_status = self.RESIZE_OK
+        if self._tail == self._capacity * self.DOWN_RESIZE_CAPACITY_CONDITION:
+            self._capacity = self._capacity * self.DOWN_RESIZE_CAPACITY_RATE
+            self._resize_status = self.RESIZE_OK
+        else:
+            self._resize_status = self.RESIZE_ERR
+
+    def _copy_to_new_array(self, new_array: list) -> None:
+        cursor = self._head
+        while cursor <= self._tail:
+            new_array[cursor - 1] = self._array[cursor - 1]
+            cursor += 1
+        self._array = new_array
+
+    def _make_array(self) -> None:
+        new_array = (self._capacity * ctypes.py_object)()
+        self._copy_to_new_array(new_array)
+
+    def append(self, node: Node) -> None:
+        if self._resize_capacity() == self.RESIZE_OK:
+            self._make_array()
+        if self.get_make_array_status() == 1:
+            self._array[self._tail] = node
+            self._tail += 1
+            self._count += 1
+            self._append_status = self.APPEND_OK
+        else:
+            self._append_status = self.APPEND_ERR
+
+    def _remove(self, ind: int) -> None:
+        for index in range(ind, self._tail - 1):
+            self._array[index] = self._array[index + 1]
+        self._array[self._tail - 1] = ctypes.py_object()
+        self._tail -= 1
+        self._count -= 1
+
+        if self._resize_capacity() == self.RESIZE_OK:
+            self._make_array()
+
+    def remove(self, ind: int) -> None:
+        if self._head <= ind <= self._tail and self._count > 0:
+            self._remove(ind)
+            self._remove_status = self.REMOVE_OK
+        else:
+            self._remove_status = self.REMOVE_ERR
+
+    def get(self, ind: int) -> Node:
+        if self._head <= self._cursor <= self._tail and self._count > 0:
+            self._get_status = self.GET_OK
+            return self._array[self._cursor - 1]
+        self._get_status = self.GET_ERR
+        return 0
+
+    def get_get_status(self) -> int:
+        return self._get_status
+
+    def get_append_status(self) -> int:
+        return self._append_status
+
+    def get_remove_status(self) -> int:
+        return self._remove_status
+
+    def get_resize_status(self) -> int:
+        return self._resize_status()
