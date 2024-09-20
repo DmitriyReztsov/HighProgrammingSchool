@@ -1,0 +1,220 @@
+--- общий комментарий - решение совпало с эталонным. Был создан базовый класс
+для очередей и двунаправленная очередь дополнена специфичными для нее методами.
+Это стало возможным из-за того, что по сути и простая очередь и двунаправленная
+реализуют одну концепцию из физического мира. Двунаправленная содержит в себе
+дополнительные способы возврата значений.
+---
+
+from abc import ABC, abstractmethod
+from typing import Self, TypeVar
+
+Node = TypeVar("Node")
+
+
+class QueueBaseABC(ABC):
+    HEAD_POS: int = 0
+    TAIL_POS: int = 0
+    COUNT: int = 0  # начальное количество элементов в массиве
+
+    REMOVE_HEAD_NIL: int = 0
+    REMOVE_HEAD_OK: int = 1
+    REMOVE_HEAD_ERR: int = 2
+
+    GET_HEAD_NIL: int = 0
+    GET_HEAD_OK: int = 1
+    GET_HEAD_ERR: int = 2
+
+    # команды
+    @abstractmethod
+    def add_tail(self, node: Node) -> None:
+        """
+        предусловия: нет
+        постусловие: элемент добавлен в конец очереди
+
+        """
+
+    @abstractmethod
+    def remove_head(self) -> Node:
+        """
+        предусловие: хвост не равен голове, т.е. очередь не пустая
+        постусловие: элемент удален из головы очереди
+
+        """
+        pass
+
+    # запросы
+    @abstractmethod
+    def get_head(self) -> Node:
+        """
+        предусловия: хвост не равен голове, т.е. очередь не пуста
+
+        """
+        pass
+
+    @abstractmethod
+    def size(self) -> int:
+        pass
+
+    @abstractmethod
+    def get_remove_head_status(self) -> int:
+        pass
+
+    @abstractmethod
+    def get_get_head_status(self) -> int:
+        pass
+
+
+class QueueABC(QueueBaseABC):
+    # конструктор
+    @abstractmethod
+    def Queue() -> Self:
+        """
+        предусловия: нет
+        постусловия: создана новая очередь
+
+        """
+        pass
+
+
+class DequeueABC(QueueBaseABC):
+    REMOVE_TAIL_NIL: int = 0
+    REMOVE_TAIL_OK: int = 1
+    REMOVE_TAIL_ERR: int = 2
+
+    GET_TAIL_NIL: int = 0
+    GET_TAIL_OK: int = 1
+    GET_TAIL_ERR: int = 2
+
+    # конструктор
+    @abstractmethod
+    def Dequeue() -> Self:
+        """
+        предусловия: нет
+        постусловия: создана новая очередь
+
+        """
+        pass
+
+    # команды
+    @abstractmethod
+    def add_head(self, node: Node) -> None:
+        """
+        предусловия: нет
+        постусловие: элемент добавлен в начало очереди
+
+        """
+
+    @abstractmethod
+    def remove_tail(self) -> Node:
+        """
+        предусловие: хвост не равен голове, т.е. очередь не пустая
+        постусловие: элемент удален из хвоста очереди
+
+        """
+        pass
+
+    # запросы
+    @abstractmethod
+    def get_tail(self) -> Node:
+        """
+        предусловия: хвост не равен голове, т.е. очередь не пуста
+
+        """
+        pass
+
+    @abstractmethod
+    def get_remove_tail_status(self) -> int:
+        pass
+
+    @abstractmethod
+    def get_get_tail_status(self) -> int:
+        pass
+
+
+class Queue(QueueABC):
+    def Queue(self) -> Self:
+        self._clear()
+        return self
+
+    def _clear(self):
+        self._head = self.HEAD_POS
+        self._tail = self.TAIL_POS
+
+        self._queue = []
+        self._count = self.COUNT
+
+        self._remove_head_status = self.REMOVE_HEAD_NIL
+        self._get_head_status = self.GET_HEAD_NIL
+
+    def add_tail(self, node: Node) -> None:
+        self._queue.append(node)
+        self._count += 1
+        self._tail += 1
+        if self._head == self.HEAD_POS:
+            self._head += 1
+
+    def remove_head(self) -> None:
+        if self._tail == self._head == 0:
+            self._remove_head_status = self.REMOVE_HEAD_ERR
+        else:
+            self._queue.pop(self._head - 1)
+            self._tail -= 1
+            self._count -= 1
+            self._remove_head_status = self.REMOVE_HEAD_OK
+
+    def get_head(self) -> Node:
+        if self._tail == self._head == 0:
+            self._get_head_status = self.GET_HEAD_ERR
+            return 0
+        self._get_head_status = self.GET_HEAD_OK
+        return self._queue[self._head - 1]
+
+    def size(self) -> int:
+        return self._count
+
+    def get_remove_head_status(self) -> int:
+        return self._remove_head_status
+
+    def get_get_head_status(self) -> int:
+        return self._get_head_status
+
+
+class Dequeue(DequeueABC, Queue):
+    def Dequeue(self) -> Self:
+        self._clear()
+        return self
+
+    def _clear(self):
+        self._remove_tail_status = self.REMOVE_TAIL_NIL
+        self._get_tail_status = self.GET_TAIL_NIL
+        super()._clear()
+
+    def add_head(self, node: Node) -> None:
+        if self._head == self.HEAD_POS:
+            head = 0
+            self._head += 1
+        else:
+            head = self._head - 1
+        self._queue.insert(head, node)
+
+    def remove_tail(self) -> Node:
+        if self._tail == self._head == 0:
+            self._remove_tail_status = self.REMOVE_TAIL_ERR
+        else:
+            self._queue.pop(self._tail - 1)
+            self._tail -= 1
+            self._count -= 1
+            self._remove_tail_status = self.REMOVE_TAIL_OK
+
+    def get_tail(self) -> Node:
+        if self._tail == self._head == 0:
+            self._get_tail_status = self.GET_TAIL_ERR
+            return 0
+        self._get_tail_status = self.GET_TAIL_OK
+        return self._queue[self._tail - 1]
+
+    def get_remove_tail_status(self) -> int:
+        return self._remove_tail_status
+
+    def get_get_tail_status(self) -> int:
+        return self._get_tail_status
