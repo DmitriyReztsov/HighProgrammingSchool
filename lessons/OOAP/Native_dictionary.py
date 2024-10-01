@@ -1,0 +1,157 @@
+from abc import ABC, abstractmethod
+from typing import Any, Self, TypeVar
+
+Node = TypeVar("Node")
+
+
+class NativeDictionaryABC(ABC):
+    NEXT_SLOT_STEP = 1
+    NOT_IN_TABLE_IND = -1
+
+    PUT_NIL: int = 0
+    PUT_OK: int = 1
+    PUT_ERR: int = 2
+
+    REMOVE_NIL: int = 0
+    REMOVE_OK: int = 1
+    REMOVE_ERR: int = 2
+
+    GET_NIL: int = 0
+    GET_OK: int = 1
+    GET_ERR: int = 2
+
+    IS_KEY_NIL: int = 0
+    IS_KEY_OK: int = 1
+    IS_KEY_ERR: int = 2
+
+    # конструктор
+    def NativeDict(self, dict_size: int) -> Self:
+        """
+        предусловия: нет
+        постусловия: создана новая таблица ключей заданного размера и массив значений такого же размера
+
+        """
+        pass
+
+    # команды
+    @abstractmethod
+    def put(self, key: Node, value: Any) -> None:
+        """
+        предусловия: в таблице ключей найден свободный слот
+        постусловие: ключ добавлен в таблицу ключей, значение - в таблицу значений на такой же индекс
+
+        """
+
+    @abstractmethod
+    def remove(self, node: Node) -> None:
+        """
+        предусловие: ключ присутствует в таблице ключей
+        постусловие: ключ удален из таблицы ключей, значение будет перезаписано
+        при следующем обращении по такому же индексу
+
+        """
+        pass
+
+    # запросы
+    @abstractmethod
+    def is_key(self, key: Node) -> bool:
+        """
+        предусловия: нет
+        постусловия: нет
+
+        """
+        pass
+
+    @abstractmethod
+    def get(self, key: Node) -> Any:
+        """
+        предусловие: ключ найден в таблице ключей
+        постусловие: нет
+        """
+        pass
+
+    @abstractmethod
+    def get_put_status(self) -> int:
+        pass
+
+    @abstractmethod
+    def get_remove_status(self) -> int:
+        pass
+
+    @abstractmethod
+    def get_get_status(self) -> int:
+        pass
+
+
+class NativeDict(NativeDictionaryABC):
+    # конструктор
+    def NativeDict(self, dict_size: int) -> Self:
+        self._dict_size = dict_size
+        self.clear()
+        return self
+
+    def clear(self) -> None:
+        self._keys: list = [None] * self._dict_size
+        self._values: list = [None] * self._dict_size
+        self._step: int = self.NEXT_SLOT_STEP
+        self._put_status: int = self.PUT_NIL
+        self._get_status: int = self.GET_NIL
+        self._remove_status: int = self.REMOVE_NIL
+        self._is_key_status: int = self.IS_KEY_NIL
+
+    # команды
+    def put(self, key: Node, value: Any) -> None:
+        slot = self._seek_empty_slot(key)
+        if self._is_key_status == self.IS_KEY_ERR:
+            self._put_status = self.PUT_ERR
+        else:
+            self._keys[slot] = key
+            self._values[slot] = value
+            self._put_status = self.PUT_OK
+
+    def remove(self, key: Node) -> None:
+        slot = self._find_node_slot(key)
+        if self._is_key_status == self.IS_KEY_ERR:
+            self._remove_status = self.REMOVE_ERR
+        else:
+            self._keys[slot] = None
+            self._remove_status = self.REMOVE_OK
+
+    # запросы
+    def _hash(self, key: Node) -> int:
+        """сам тип Node должен, видимо, содержать метод hash"""
+        raise NotImplementedError
+
+    def _seek_empty_slot(self, key: Node) -> int:
+        # находит индекс пустого слота для значения, или -1
+        slot = self._hash(key)
+        first_slot = slot
+        while self._keys[slot] is not None:
+            slot = (slot + self._step) % self._dict_size
+            if slot == first_slot:
+                self._is_key_status = self.IS_KEY_ERR
+                return self.NOT_IN_TABLE_IND
+        return slot
+
+    def _find_key_slot(self, key: Node) -> int:
+        # находит индекс слота со значением, или -1
+        slot = self._hash(key)
+        first_slot = slot
+        while self._keys[slot] != key:
+            slot = (slot + self._step) % self._dict_size
+            if slot == first_slot:
+                self._is_key_status = self.IS_KEY_ERR
+                return self.NOT_IN_TABLE_IND
+        return slot
+
+    def is_key(self, key: Node) -> bool:
+        return self._is_key_status == self.IS_KEY_OK
+
+    def get_put_status(self) -> int:
+        return self._put_status
+
+    def get_get_status(self) -> int:
+        return self._get_status
+
+    def get_remove_status(self) -> int:
+        return self._remove_status
