@@ -1,0 +1,328 @@
+from abc import ABC, abstractmethod
+from typing import Self, TypeVar
+
+Node = TypeVar("Node")
+
+
+class HashTableABC(ABC):
+    NEXT_SLOT_STEP = 1
+    NOT_IN_TABLE_IND = -1
+
+    ADD_NIL: int = 0
+    ADD_OK: int = 1
+    ADD_ERR: int = 2
+
+    REMOVE_NIL: int = 0
+    REMOVE_OK: int = 1
+    REMOVE_ERR: int = 2
+
+    IN_TABLE_NIL = 0
+    IN_TABLE_OK = 1
+    IN_TABLE_ERR = 2
+
+    # команды
+    @abstractmethod
+    def add(self, node: Node) -> None:
+        """
+        предусловия: в таблице найден свободный слот
+        постусловие: элемент добавлен в таблицу
+
+        """
+
+    @abstractmethod
+    def remove(self, node: Node) -> None:
+        """
+        предусловие: элемент присутствует в таблице
+        постусловие: элемент удален таблицы
+
+        """
+        pass
+
+    # запросы
+    @abstractmethod
+    def is_in_table(self, node: Node) -> bool:
+        """
+        предусловия: нет
+        постусловия: нет
+
+        """
+        pass
+
+    @abstractmethod
+    def get_add_status(self) -> int:
+        pass
+
+    @abstractmethod
+    def get_remove_status(self) -> int:
+        pass
+
+    @abstractmethod
+    def size(self) -> int:
+        pass
+
+
+class PowerSetABC(HashTableABC):
+    ALREADY_EXISTS = -1
+
+    INTERSEC_NIL = 0
+    INTERSEC_OK = 1
+    INTERSEC_ERR = 2
+
+    UNION_NIL = 0
+    UNION_OK = 1
+    UNION_ERR = 2
+
+    DIFF_NIL = 0
+    DIFF_OK = 1
+    DIFF_ERR = 2
+
+    ISSUB_NIL = 0
+    ISSUB_OK = 1
+    ISSUB_ERR = 2
+
+    EQUAL_NIL = 0
+    EQUAL_OK = 1
+    EQUAL_ERR = 2
+
+    # конструктор
+    @abstractmethod
+    def PowerSet(self, set_size: int) -> Self:
+        """
+        предусловия: нет
+        постусловия: создана новая таблица заданного размера
+
+        """
+        pass
+
+    # команды
+    @abstractmethod
+    def add(self, node: Node) -> None:
+        """
+        измененный метод
+
+        предусловия: в таблице найден элемент либо свободный слот. Если элемент уже содержится в таблице
+        - ничего не делать
+        постусловие: элемент добавлен в таблицу
+
+        """
+
+    # запросы
+    @abstractmethod
+    def intersection(self, power_set: Self) -> Self:
+        """
+        предусловие: нет (или условием должно быть то, что параметр - того же типа множества)
+        постусловия: сформирован новый объект класса, состоящий из элементов, присутстсвующих в обеих множествах
+        без повторяющихся
+
+        """
+        pass
+
+    @abstractmethod
+    def get_intersec_status(self) -> int:
+        pass
+
+    @abstractmethod
+    def union(self, power_set: Self) -> Self:
+        """
+        предусловие: нет (параметр - того же типа множества)
+        постусловие: сформирован новый объект класса, состоящий из элементов, представленных хотя бы в одном множестве
+        без повторений
+
+        """
+        pass
+
+    @abstractmethod
+    def get_union_status(self) -> int:
+        pass
+
+    @abstractmethod
+    def difference(self, power_set: Self) -> Self:
+        """
+        предусловие: нет (параметр - того же типа множества)
+        постусловие: сформирован новый объект класса, состоящий из элементов текущего множества,
+        не представленных в множестве-параметре
+
+        """
+        pass
+
+    @abstractmethod
+    def get_diff_status(self) -> int:
+        pass
+
+    @abstractmethod
+    def issubset(self, power_set: Self) -> bool:
+        """
+        предусловия: нет (параметр - того же типа множества)
+        постусловия: True - если исходное множество содержится полностью в множестве-параметре, False - если иначе.
+        """
+        pass
+
+    @abstractmethod
+    def get_issub_status(self) -> int:
+        pass
+
+    @abstractmethod
+    def equals(self, power_set: Self) -> bool:
+        """
+        предусловия: нет (параметр - того же типа множества)
+        постусловия: True - если исходное множество полностью в множестве-параметре
+        И множество-параметр содержится полностью в исходном множестве, False - если иначе.
+        """
+        pass
+
+    @abstractmethod
+    def get_equal_status(self) -> int:
+        pass
+
+
+class PowerSet(PowerSetABC):
+    # конструктор
+    def PowerSet(self, set_size: int) -> Self:
+        self._set_size = set_size
+        self.clear()
+        return self
+
+    def clear(self) -> None:
+        self._slots: list = [None] * self._set_size
+        self._size = 0
+        self._step: int = self.NEXT_SLOT_STEP
+        self._add_status: int = self.ADD_NIL
+        self._remove_status: int = self.REMOVE_NIL
+        self._is_in_set: int = self.IN_TABLE_NIL
+        self._intersec_status: int = self.INTERSEC_NIL
+        self._union_status: int = self.UNION_NIL
+        self._diff_status: int = self.DIFF_NIL
+        self._issub_status: int = self.ISSUB_NIL
+        self._equal_status: int = self.EQUAL_NIL
+
+    # команды
+    def add(self, node: Node) -> None:
+        slot = self._seek_empty_slot(node)
+        if slot in [self.NOT_IN_TABLE_IND, self.ALREADY_EXISTS]:
+            self._add_status = self.ADD_ERR
+        else:
+            self._slots[slot] = node
+            self._size += 1
+            self._add_status = self.ADD_OK
+
+    def remove(self, node: Node) -> None:
+        slot = self._find_node_slot(node)
+        if slot == self.NOT_IN_TABLE_IND:
+            self._remove_status = self.REMOVE_ERR
+        else:
+            self._slots[slot] = None
+            self._size -= 1
+            self._remove_status = self.REMOVE_OK
+
+    # запросы
+    def _hash(self, node: Node) -> int:
+        """сам тип Node должен, видимо, содержать метод hash"""
+        raise NotImplementedError
+
+    def _seek_empty_slot(self, node: Node) -> int:
+        # находит индекс пустого слота для значения, или -1
+        slot = self._hash(node)
+        first_slot = slot
+        while self._slots[slot] is not None:
+            if self._slots[slot] == node:
+                return self.ALREADY_EXISTS
+            slot = (slot + self._step) % self._set_size
+            if slot == first_slot:
+                return self.NOT_IN_TABLE_IND
+        return slot
+
+    def _find_node_slot(self, node: Node) -> int:
+        # находит индекс слота со значением, или -1
+        slot = self._hash(node)
+        first_slot = slot
+        while self._slots[slot] != node:
+            slot = (slot + self._step) % self._set_size
+            if slot == first_slot:
+                self._is_in_set = self.IN_TABLE_ERR
+                return self.NOT_IN_TABLE_IND
+        self._is_in_set = self.IN_TABLE_OK
+        return slot
+
+    def is_in_table(self, node: Node) -> bool:
+        self._find_node_slot(node)
+        return self._is_in_set == self.IN_TABLE_OK
+
+    def get_add_status(self) -> int:
+        return self._add_status
+
+    def get_remove_status(self) -> int:
+        return self._remove_status
+
+    def intersection(self, power_set: "PowerSet") -> "PowerSet":
+        return_set: PowerSet = PowerSet().PowerSet(set_size=max(self._size, power_set.size()))
+        if not isinstance(power_set, PowerSet):
+            self._intersec_status = self.INTERSEC_ERR
+        else:
+            for node in self._slots:
+                if power_set.is_in_table(node):
+                    return_set.add(node)
+            self._intersec_status = self.INTERSEC_OK
+        return return_set
+
+    def get_intersec_status(self) -> int:
+        return self._intersec_status
+
+    def union(self, power_set: "PowerSet") -> "PowerSet":
+        return_set: PowerSet = PowerSet().PowerSet(set_size=self._size + power_set.size())
+        if not isinstance(power_set, PowerSet):
+            self._union_status = self.UNION_ERR
+        else:
+            for node in self._slots:
+                return_set.add(node)
+            for node in power_set._slots:
+                return_set.add(node)
+            self._union_status = self.UNION_OK
+        return return_set
+
+    def get_union_status(self) -> int:
+        return self._union_status
+
+    def difference(self, power_set: "PowerSet") -> "PowerSet":
+        return_set: PowerSet = PowerSet().PowerSet(set_size=self._size + power_set.size())
+        if not isinstance(power_set, PowerSet):
+            self._union_status = self.UNION_ERR
+            return False
+        for node in self._slots:
+            if not power_set.is_in_table(node):
+                return_set.add(node)
+        self._union_status = self.UNION_OK
+        return return_set
+
+    def get_diff_status(self) -> int:
+        return self._diff_status
+
+    def issubset(self, power_set: "PowerSet") -> bool:
+        if not isinstance(power_set, PowerSet):
+            self._union_status = self.UNION_ERR
+            return False
+
+        for node in self._slots:
+            if not power_set.is_in_table(node):
+                return False
+        self._union_status = self.UNION_OK
+        return True
+
+    def get_issub_status(self) -> int:
+        return self._issub_status
+
+    def equals(self, power_set: "PowerSet") -> bool:
+        if not isinstance(power_set, PowerSet):
+            self._union_status = self.UNION_ERR
+        else:
+            for node in self._slots:
+                if not power_set.is_in_table(node):
+                    return False
+
+            for node in self._slots:
+                if not power_set.is_in_table(node):
+                    return False
+            self._union_status = self.UNION_OK
+        return True
+
+    def get_equal_status(self) -> int:
+        return self._equal_status

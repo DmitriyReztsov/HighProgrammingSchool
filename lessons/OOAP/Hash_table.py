@@ -81,15 +81,17 @@ class HashTable(HashTableABC):
         slot = self._seek_empty_slot(node)
         if slot == self.NOT_IN_TABLE_IND:
             self._add_status = self.ADD_ERR
-        self._slots[slot] = node
-        self._add_status = self.ADD_OK
+        else:
+            self._slots[slot] = node
+            self._add_status = self.ADD_OK
 
     def remove(self, node: Node) -> None:
         slot = self._find_node_slot(node)
         if slot == self.NOT_IN_TABLE_IND:
             self._remove_status = self.REMOVE_ERR
-        self._slots[slot] = None
-        self._remove_status = self.REMOVE_OK
+        else:
+            self._slots[slot] = None
+            self._remove_status = self.REMOVE_OK
 
     # запросы
     def _hash(self, node: Node) -> int:
@@ -100,7 +102,7 @@ class HashTable(HashTableABC):
         # находит индекс пустого слота для значения, или -1
         slot = self._hash(node)
         first_slot = slot
-        while self.slots[slot] is not None:
+        while self._slots[slot] is not None:
             slot = (slot + self._step) % self._table_size
             if slot == first_slot:
                 return self.NOT_IN_TABLE_IND
