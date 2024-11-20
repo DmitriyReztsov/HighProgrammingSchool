@@ -1,0 +1,174 @@
+Задача создать ендпойнт, принимающий данные об изменениях в ряде полей, распарсить этот запрос и обновить несколько 
+сущностей, связанных с пользователем.
+
+Вначале я добавил тест, который должен был бы быть успешным просто при валидации входящих данных.
+
+Начал с валидации инвойса.
+
+test.py
+invoice_data = {
+    "invoice_number": fake.lexify(),
+    "invoice_amount": fake.random_int(1, 1000000),
+    "invoice_uuid": invoice.id,
+}
+response = self.client.patch(self.url, invoice_data, format="json")
+self.assertEqual(response.statuse_code, status.HTTP_200_OK)
+
+Тест вначале падал, поскольку такого метода PATCH на ендпойнте не было.
+Вначале я добавил во вью код, повторяющий код в метода POST, поскольку на первый взгляд казалось, что так оно должно 
+тоже работать, надо только добавить параметр partitial=True для частичной валидации полей.
+
+view.py
+def patch(self, request, *args, **kwargs):
+    ...
+    data = set_previous_and_current_year_in_bank_statements_by_current_date(request.data)
+    epp_ready_upload_docs_serializer = EppReadyFlowUploadDocsSerializer(
+        data=data, partial=True, context={"request": request, "action": "patch"}
+    )
+    epp_ready_upload_docs_serializer.is_valid(raise_exception=True)
+    return Response(status=status.HTTP_200_OK)
+    
+При частичных данных тест начал падать при валидации, поскольку был прописан метод validate() в сериалайзере. 
+По методике я должен был откатить код и начать сначала. В принципе, во вью альтернативы не было и код я написал заново, 
+но теперь добавил новый сериалайзер.
+
+view.py
+def patch(self, request, *args, **kwargs):
+    ...
+    data = set_previous_and_current_year_in_bank_statements_by_current_date(request.data)
+    epp_ready_upload_docs_serializer = EppReadyFlowUploadDocsUpdateSerializer(
+        data=data, partial=True, context={"request": request, "action": "patch"}
+    )
+    epp_ready_upload_docs_serializer.is_valid(raise_exception=True)
+    return Response(status=status.HTTP_200_OK)
+    
+Если не считать несколько итераций падающего теста из-за поиска правильных полей и правильно вида сериалайзера 
+(ModelSerializer или Serializer), то в результате этой итерации в целом получилос добиться нормально работающего теста.
+
+Коммит.
+
+Но это же еще даже не промежуточный результат. Хотя тест и не падает, но пользоваться ендпойнтом нельзя. Он верен только
+ в части 1-го и 2-го уровня корректности программы, т.е. в рантайме, если вызвать ендпойнт, он вернет 200 статус, 
+ программа тоже работает без ошибок, но спецификация не достигается.
+
+Добавляю в тест проверки, которые должны пройти для обновления инвойса.
+
+test.py
+invoice.refresh_from_db()
+self.assertEqual(invoice.id, response.data["invoice_uuid"])
+self.assertEqual(invoice.project.id, response.data["project"])
+self.assertEqual(invoice.amount, response.data["invoice_amount"])
+self.assertEqual(invoice.amount, invoice_data["invoice_amount"])
+self.assertEqual(invoice.number, response.data["invoice_number"])
+self.assertEqual(invoice.number, invoice_data["invoice_number"])
+
+Т.е. при передаче инвойса, который надо поменять, на выходе должен обновиться инвойс в базе и ответ с ендпойнта должен 
+содержать правильные данные о инвойсе.
+
+Тест ожидаемо падает. Для обновления инвойса добавляю две функции во вью.
+
+view.py
+def patch(self, request, *args, **kwargs):
+    ...
+    data = set_previous_and_current_year_in_bank_statements_by_current_date(request.data)
+    epp_ready_upload_docs_serializer = EppReadyFlowUploadDocsUpdateSerializer(
+        data=data, partial=True, context={"request": request, "action": "patch"}
+    )
+    epp_ready_upload_docs_serializer.is_valid(raise_exception=True)
+    invoice = update_or_create_invoice_for_epp_ready_flow(
+        request, epp_ready_upload_docs_serializer.data, partial_update=True
+    )
+    if invoice:
+        set_invoice_in_epp_ready_flow(user_company, invoice)
+    return Response(status=status.HTTP_200_OK)
+    
+На первое время певая функция в коде выглядят как заглушка, вторая - можно написать ее сразу.
+
+service.py
+def update_or_create_invoice_for_epp_ready_flow(request, raw_data: dict, partial_update: bool = False) -> "Invoice":
+    return Invoice.objects.filter(id=invoice_uuid).first()
+
+def set_invoice_in_epp_ready_flow(company: "Company", invoice: "Invoice") -> None:
+    EppReadyFlow.objects.update_or_create(
+        company=company,
+        defaults={"invoice": invoice},
+    )
+
+Чтобы тест проходил, добавляю мок первой функции.
+test.py
+patch_update_or_create_invoice = mock.patch(
+    "epp.service.update_or_create_invoice_for_epp_ready_flow", new_callable=mock_update_or_create_invoice
+)
+
+Можно сделать коммит. Программа опять же не падает, тесты проходят, но спецификации код не соответствует.
+
+Далее пишу функцию update_or_create_invoice_for_epp_ready_flow. Разбить ее на какие-то более мелкие элементы не вижу 
+возможности, поэтому ошибки в логике или в каких-то синтаксических моментах заставляют откатывать и заново писать уже 
+написаное (по методике). Хотя, честно говоря, не каждый раз я откатываю. Получилась такая функция:
+
+services.py
+def update_or_create_invoice_for_epp_ready_flow(request, raw_data: dict, partial_update: bool = False) -> "Invoice":
+    from payments.models import Invoice
+    from payments.serializers import InvoiceSerializer
+
+    invoice_uuid = raw_data.get("invoice_uuid")
+    if partial_update and not invoice_uuid:
+        return Invoice.objects.none().first()
+
+    invoice_data = {
+        "number": raw_data.get("invoice_number"),
+        "billing_from": raw_data.get("billing_from"),
+        "billing_to": raw_data.get("billing_to"),
+        "amount": raw_data.get("invoice_amount"),
+        "summary_file": raw_data.get("invoice_file"),
+        "project": raw_data.get("project"),
+        "subcontractor": request.user.selected_membership.company_id,
+        "status": Invoice.APPROVED,
+    }
+
+    initial_invoice = Invoice.objects.filter(id=invoice_uuid).first()
+
+    if initial_invoice:
+        clean_data = clean_dict_from_none(invoice_data)
+
+        invoice_serializer = InvoiceSerializer(
+            initial_invoice,
+            data=clean_data,
+            context={"request": request, "is_invoice_for_epp": True},
+            partial=True,
+        )
+    else:
+        invoice_serializer = InvoiceSerializer(
+            data=invoice_data,
+            context={"request": request, "is_invoice_for_epp": True},
+        )
+
+    invoice_serializer.is_valid(raise_exception=True)
+    invoice = invoice_serializer.save()
+
+    return invoice
+    
+И когда общая канва была написана (сборка словаря, проверка существующего инвойса) то тест падал при попытке создания 
+обновленного инвойса из-за лшних полей, то тогда я просто уже добавил очистку словаря от пустых значений и проверку на 
+отсутствие идентификатора инвойса.
+
+В итоге обновление одного из документов было написано. Повторил на обновлении остальных документов. Буду честен - на 
+больших обновлениях срывался и писал "по-старинке", запуская тест и правил, не откатывая.
+Минимальные изменения, которые хотелось закоммитить - в пределах одной функции. Успешность применения такого подхода 
+зависела от объема спецификации. Если, как в примерес инвойсом, правок требовал относительно небольшой объект, то такая 
+пошаговая разработка шла легко. Трудности были при работе с большим объектом - модель с ограничением по уникальности 
+набора полей. Там логика (в частности, валидации) была более разветвленная и откатывание каждый раз, когда валидация не 
+проходила, в какой-то момент стало тормозить процесс, поскольку приходилось до проблемного места заново переписывать код. 
+А разбить один метод на несколько независимых не выходило, при этом коммитить с неработающим тестом тоже по методике нельзя.
+
+Из выводов, которые для себя сделал: чтобы часто коммитить работающим кодом надо изначально бить таску на такие же 
+мелкие спецификации. Мой код стал соответствовать спецификации задачи только после выполнения всех итераций. Хотя в 
+работе передо мной не ставится задача коммитить в мастер каждый день. Но сама тренировка декомпозиции задачи - важная 
+тема для возможности совместной разработки. Можно было бы разбить эту задачу на несколько мелких и несколькими 
+разработчиками выполнить ее быстрее, потому что документы, которые надо обновлять на ендпойнте, зависят друг от друга 
+через одну модель, что в принципе можно было бы замокать или потом при интерграции решений разрешить.
+
+ссылки на файл с кодом
+https://github.com/DmitriyReztsov/HighProgrammingSchool/blob/main/lessons/strong_ideas/minimize_changes/code.py
+и тестом
+https://github.com/DmitriyReztsov/HighProgrammingSchool/blob/main/lessons/strong_ideas/minimize_changes/tests.py
