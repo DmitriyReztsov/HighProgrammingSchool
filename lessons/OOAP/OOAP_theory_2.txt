@@ -910,4 +910,209 @@ class General implements Serializable {
 Выясните, как в используемом вами языке программирования элегантнее всего реализовать поддержку сложения элементов произвольных типов.
 Проверьте, насколько корректно будет работать сложение объектов типа Vector<Vector<Vector<T>>>. 
 
+Решения задания 14
+
+Сформируйте тип (класс) Vector<T> , над которым допустима операция сложения.
+Cложите объекты типа Vector<Vector<Vector<T>>>
+
+Python
+
+class Any(General):
+
+    ... 
+
+    def __add__(self, other):
+        """Summation"""
+        raise NotImplementedError()
+
+class Vector(Any):
+    """
+    >>> v1 = Vector(0, 1, 2)
+    >>> v2 = Vector(7, 10, 15)
+    >>> (v1 + v2).get_sequence_representation()
+    (7, 11, 17)
+    >>> v3 = Vector(3)
+    >>> (v1 + v3) is Void
+    True
+    >>> v4 = Vector(6)
+    >>> nested_v1 = Vector(Vector(v1), Vector(v3))
+    >>> nested_v2 = Vector(Vector(v2), Vector(v4))
+    >>> nested_v1.get_sequence_representation()
+    (((0, 1, 2),), ((3,),))
+    >>> nested_v2.get_sequence_representation()
+    (((7, 10, 15),), ((6,),))
+    >>> (nested_v1 + nested_v2).get_sequence_representation()
+    (((7, 11, 17),), ((9,),))
+    """
+
+    def __init__(self, *args: t_Any, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.sequence = args
+        self._size = len(args)
+
+    def __add__(self, other: 'Vector') -> Union['Vector', Void]:
+        try:
+            assert self._size == other._size
+        except AssertionError:
+            sum_vector = Void
+        else:
+            sum_vector = self._sum_vectors(other)
+        return sum_vector
+
+    def _sum_vectors(self, other: 'Vector') -> 'Vector':
+        sequence_items = starmap(operator.add, zip(self.sequence, other.sequence))
+        sum_vector = Vector(*sequence_items)
+        return sum_vector
+
+    def get_sequence_representation(self) -> tuple:
+        """Get representation of all nested sequence (recursive)"""
+        this_func_name = self.get_sequence_representation.__name__
+        representation = tuple(
+                getattr(item, this_func_name, lambda: item)()
+                for item in self.sequence)
+return representation
+
+Java
+
+public class Adder<T> extends Any {
+
+    public T sum(T first, T second){
+
+        T ans = null;
+
+        if(first instanceof String){
+            ans = sumString(first, second);
+        }
+
+        if(first instanceof Integer){
+            ans = sumInteger(first, second);
+        }
+
+        if (first instanceof Double){
+            ans = sumDouble(first, second);
+        }
+
+        return ans;
+    }
+
+    private T sumString(T first, T second){
+        return (T)(first + (String)second);
+    }
+
+    private T sumInteger(T first, T second){
+        Integer sum = (Integer)first + (Integer)second;
+        T value = (T)sum;
+        return value;
+    }
+
+    private T sumDouble(T first, T second){
+        return (T)((Double)((Double)(first) + (Double)second));
+    }
+}
+
+public class Vector<T> extends Adder {
+
+    public static int ADD_NIL = 0;
+    public static int ADD_OK = 1;
+    public static int ADD_ERR = 2;
+
+    private int length;
+    private T[] arr;
+    private int add_status;
+
+    public Vector(T[] arr){
+        this.arr = arr;
+        length = arr.length;
+        add_status = ADD_NIL;
+    }
+
+    public Vector(int length){
+        arr = (T[])new Object[length];
+        this.length = length;
+        add_status = ADD_NIL;
+    }
+
+    public void add(Vector<? extends T> v){
+        Vector<String> temp = new Vector<String>(1);
+        if (v.getLength() == length){
+            T[] arr2 = v.getArr();
+
+            for (int i = 0; i < length; i++){
+                if(arr2[i].getClass().isInstance(temp)){ 
+                // проверяем типы. Если это Vector, то:
+                    ((Vector<T>)arr[i]).add(((Vector<T>)arr2[i]));
+                }
+                else { // иначе - это Number или String
+                    add_v((Vector<T>) v);
+                    add_status = ADD_OK;
+                    break;
+                }
+            }
+
+            add_status = ADD_OK;
+        }
+        else{
+            add_status = ADD_ERR;
+        }
+    }
+
+    private void add_v(Vector<T> v){
+        T[] arr2 = v.getArr();
+        for(int i = 0; i < length; i++){
+            arr[i] = (T) sum(arr[i], arr2[i]);
+        }
+    }
+
+    public static Vector addVectors(Vector v1, Vector v2){
+        Vector ans = (Vector)v1.deepCopy();
+
+        ans.add(v2);
+
+        return ans;
+    }
+
+    public int getLength(){
+        return length;
+    }
+
+    public int get_add_status(){
+        return add_status;
+    }
+
+    public T[] getArr(){
+        return arr;
+    }
+}
+
+
+
+18. Как расширять иерархию новыми классами
+
+В каких случаях надо расширять иерархию классов, как правильно это делать?
+
+Добавление нового класса как потомка некоторого класса имеет смысл, если этот потомок либо переопределяет какие-либо наследуемые методы, либо расширяет его новыми методами.
+
+Но это правило связано с реализацией, а главный принцип остаётся прежним -- любой класс это всегда реализация соответствующей спецификации АТД (полная или частичная). Любой класс в иерархии реализует свой АТД, и каждый АТД представляет собой оригинальную конкретную структуру данных со своим набором операций, и добавляется он прежде всего в техническое задание, в общую модель системы. В частности, если в проекте потребовалась сущность, для которой надо изменить пред- и постусловия некоторого АТД, значит, надо добавить потомок этого АТД с переопределением соответствующих запросов или команд.
+
+Существует, пожалуй, единственное исключение, когда можно включать новый класс, не добавляющий ничего нового -- когда иерархия точно отражает некоторую предметную область, и в ней приняты соответствующие частные случаи как самостоятельные сущности, однако отдельные АТД им не нужны, достаточно добавить класс лишь как новый синтаксический элемент. И всё равно такой практике надо максимально сопротивляться.
+
+Классический пример конфликта таксономии (теории классификации), встречающийся сегодня очень часто -- это расширение класса, описывающего какой-то аспект человека (например, Human или Sportsman), его полом. Обычно такое расширение выполняется добавлением булева атрибута female, после чего во многих местах кода начинают появляться проверки if female then ...
+
+Это, как уже говорилось, верный признак плохого проектирования. Как только такие цепочки проверок начинают размазываться по всему проекту, возникает риск забыть исправить одну из них в случае модификации соответствующей логики -- например, когда количество вариантов существенно увеличится. Сегодня в некоторых странах допускается больше чем два значения пола, а всего их насчитывается уже более пятидесяти, и эта проблема схожа с проблемой Y2K, когда под хранение года в 20-м веке отводилось не четыре цифры, а только две последние. 
+
+
+19. Решение конфликта таксономии
+
+В случаях, когда некоторая характеристика нужна в основном для статистики, или для поддержки специфической логики, её можно оформить в виде атрибута. Однако если такая характеристика подразумевает различную логику в зависимости от её значения (условные цепочки if else), лучше создавать под каждое значение отдельный класс (в нашем случае Male и Female).
+
+Это позволяет, во-первых, избежать ограничения типа -- в данном случае при добавлении третьего значения пола придётся расширять не только все условные цепочки, но и тип поля female (что, возможно, потребует модификации таблиц в базе данных), и вдобавок название этого поля female станет ненаглядным. А наследование подразумевает всего лишь добавление нового класса с ясным названием и одним-двумя переопределёнными методами.
+
+Во-вторых, все различия в логике обработки разных полов удобно инкапсулируются в одном месте, внутри конкретного класса.
+
+И в-третьих, все условные цепочки заменяются на единственный полиморфный вызов нужного метода.
+
+Задание 15.
+
+Приведите пример небольшой иерархии, где вместо некоторого поля родительского класса с набором предопределённых значений (как в случае с полем female) применяется наследование.
+
 
