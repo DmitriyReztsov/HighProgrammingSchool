@@ -1,0 +1,21 @@
+кластер юзер-интерфейса
+Window
+
+кластер поля
+PlayGround
+Cell
+CellNode
+
+кластер счета
+Score
+Bonus
+
+кластер игровой логики
+Combination
+
+кластер ходов
+StepStack
+Step
+
+кластер пользователя
+Gamer
