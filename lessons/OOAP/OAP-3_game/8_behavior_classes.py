@@ -6,6 +6,7 @@ class Window:
 
         self._create_combinations_list()
         self._create_score()
+        self._create_step_stack()
         self.run()
 
     def _create_combinations_list(self) -> None:
@@ -13,6 +14,9 @@ class Window:
 
     def _create_score(self) -> None:
         self._gamer_score = Score(self._gamer)
+
+    def _create_step_stack(self) -> None:
+        self._step_stack = StepStack()
 
     def run(self) -> None:
         """команда. Создает сущности игрового поля. Запускает цикл ввод - обработка - вывод результата.
