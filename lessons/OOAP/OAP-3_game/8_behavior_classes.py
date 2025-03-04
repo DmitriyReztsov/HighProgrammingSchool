@@ -23,7 +23,6 @@ class Window:
         предусловия: нет
         постусловия: нет
         """
-        
         ...
 
     def _input_step(self):
@@ -151,7 +150,7 @@ class PlayGround:
 
 class Cell:
     def __init__(self):
-        self.rignt = None
+        self.right = None
         self.left = None
         self.up = None
         self.down = None
@@ -165,7 +164,7 @@ class Cell:
         return self.down
 
     def get_right(self) -> "Cell":
-        return self.rignt
+        return self.right
 
     def get_left(self) -> "Cell":
         return self.left
