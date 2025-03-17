@@ -1,0 +1,294 @@
+1. Ghost state (тема требует погружения и разбора с примерами)
+1.1. В приведенном коде, возможно, к переменной, не отображенной в сигнатуре и спецификации можно отнести переменную end_position_horiz, которая пересчитывается внутри функции. Хотя она использует данные из объектов, передаваемых в функцию и описанных в сигнатуре и спецификации класса.
+
+def _set_page_footer(
+    self,
+    canvas: Canvas,
+    footer_text_lines: dict[int, str],
+    page_num: int,
+    total_pages: int,
+    page: dict[Any, Any],
+):
+    # Add page
+    canvas.setPageSize((page.BBox[2], page.BBox[3]))
+    canvas.doForm(makerl(canvas, page))
+
+    # Draw footer
+    canvas.saveState()
+    canvas.setStrokeColorRGB(0, 0, 0)
+    canvas.setLineWidth(0.5)
+    start_position_horiz = self.left_margin
+    end_position_horiz = page.BBox[2] - self.right_margin
+    start_position_vert = self.bottom_margin
+    end_position_vert = self.bottom_margin
+    canvas.line(start_position_horiz, start_position_vert, end_position_horiz, end_position_vert)
+    canvas.setFont(self.font, self.font_size)
+
+    for line_num, line_text in footer_text_lines.items():
+        if line_num == 0:
+            line_text = line_text.format(page_num, total_pages)
+        start_position_horiz = self.left_margin
+        start_position_vert = self.bottom_margin - 0.25 * inch - line_num * self.font_size
+        canvas.drawString(
+            start_position_horiz,
+            start_position_vert,
+            line_text,
+        )
+
+    canvas.restoreState()
+    canvas.showPage()
+
+1.2. В этом методе так же есть локальные переменные x и y, вычисляемые из входных данных и неучтенного параметра. Происходят неочевидные для взгляда извне вычисления.
+
+def get_cell_by_text_coord(self, text_coord: str) -> "ICell":
+    x = ord(text_coord[0].lower()) - ord("a")
+    y = int(text_coord[1]) - 1
+    return self._get_cell(x, y)
+
+1.3. Возможно, что использование в качестве переменных, вляющих на состояние, переменных цикла - тоже может относиться к призрачному состоянию
+
+def analyze_playground(
+    self, combinations_list: list[ICombination]
+) -> None:
+    for x in range(self.dimension.x):
+        for y in range(self.dimension.y):
+            cell = self._get_cell(x, y)
+            self._analyze_cell(cell, combinations_list)
+
+
+2. Погрешнисти (неточности)
+2.1. В конкретном классе задано жесткое ограничние по уникальности полей. Однако не все поля из ограничений использовались в конкретных документах и для обхода этого было введено значение для неопределенных периодов.
+
+class FinancialDocument(SoftDeleteObject, CoreModelMixin, TrackingFieldsChangesGFKMixin, models.Model):
+    UNDEFINED_PERIOD = -1
+
+    document_type = models.CharField(max_length=50, choices=DocumentType.choices)
+    financial_year = models.IntegerField(default=UNDEFINED_PERIOD)
+    financial_month = models.IntegerField(default=UNDEFINED_PERIOD)
+    financial_quarter = models.IntegerField(default=UNDEFINED_PERIOD)
+    file = models.OneToOneField("file_manager.File", on_delete=models.CASCADE, related_name="financial_document")
+    subcontractor = models.ForeignKey("epp.SubContractor", on_delete=models.CASCADE, related_name="financial_documents")
+
+    class Meta:
+        unique_together = ("subcontractor", "document_type", "financial_year", "financial_month", "financial_quarter")
+
+имеет смысл выделить общий абстрактный класс с меньшим количеством органичений и определять конкретные ограничения внутри дочерних классов. Таким образом родительский класс (который может быть абстрактным) можно рассматривать как интерфейс, в то время как конкретный класс - как реализацию.
+
+class FinancialDocumentAbstract(SoftDeleteObject, CoreModelMixin, TrackingFieldsChangesGFKMixin, models.Model):
+    document_type = models.CharField(max_length=50, choices=DocumentType.choices)
+    financial_year = models.IntegerField(default=UNDEFINED_PERIOD)
+    financial_month = models.IntegerField(default=UNDEFINED_PERIOD)
+    financial_quarter = models.IntegerField(default=UNDEFINED_PERIOD)
+    file = models.OneToOneField("file_manager.File", on_delete=models.CASCADE, related_name="financial_document")
+    subcontractor = models.ForeignKey("epp.SubContractor", on_delete=models.CASCADE, related_name="financial_documents")
+
+    class Meta:
+        abstact = True
+        unique_together = ("subcontractor", "document_type")
+
+
+class BankStstement(FinancialDocumentAbstract):
+    class Meta:
+        unique_together = ("subcontractor", "document_type", "financial_year")
+
+2.2. Если бы данная функция представляла собой две реализации для проверок двух разных типов данных (при том, что по сути она делает одно и то же), то она могла бы выглядеть так:
+def is_notification_disabled_for_collection(event_object: Collection) -> bool:
+    match event_object:
+        case Collection(ledger=ledger) if ledger is not None:
+            msg = "Ledger associated with Collection" + GENERIC_IS_DISABLED_ERROR
+            logger.debug(msg, ledger=event_object.ledger, collection=event_object)
+            return True
+        case Collection():
+            logger.debug(NO_LEDGER_ERROR, collection=event_object)
+            return True
+        case _:
+            logger.exception(
+                IS_NOTIFICATIONS_DISABLED_ERROR + f"... checked unporocessable entity {type(event_object)}",
+                event_object=event_object,
+            )
+            return True
+
+
+def is_notification_disabled_for_ledger(event_object: Ledger) -> bool:
+    match event_object:
+        case Ledger(epp_request=epp_request) | Collection(
+            ledger=Ledger(epp_request=epp_request)
+        ) if epp_request is not None:
+            if not epp_request.lender or not hasattr(epp_request.lender, "disable_epp_notifications"):
+                logger.debug(MISSING_LENDER_OR_DISABLED_ERROR, epp_request=epp_request)
+                return True
+            return epp_request.lender.disable_epp_notifications
+        case Ledger():
+            logger.debug("Ledger" + GENERIC_IS_DISABLED_ERROR, ledger=event_object)
+            return True
+        case _:
+            logger.exception(
+                IS_NOTIFICATIONS_DISABLED_ERROR + f"... checked unporocessable entity {type(event_object)}",
+                event_object=event_object,
+            )
+            return True
+
+но функция была объединена, тип входного параметра был расширен и проверка осуществляется из одной функции, куда легко можно вносить добавления, расширения или наоборот сужать условия
+def is_notification_disabled(event_object: Collection | Ledger) -> bool:
+    match event_object:
+        case Ledger(epp_request=epp_request) | Collection(
+            ledger=Ledger(epp_request=epp_request)
+        ) if epp_request is not None:
+            if not epp_request.lender or not hasattr(epp_request.lender, "disable_epp_notifications"):
+                logger.debug(MISSING_LENDER_OR_DISABLED_ERROR, epp_request=epp_request)
+                return True
+            return epp_request.lender.disable_epp_notifications
+        case Ledger():
+            logger.debug("Ledger" + GENERIC_IS_DISABLED_ERROR, ledger=event_object)
+            return True
+
+        case Collection(ledger=ledger) if ledger is not None:
+            msg = "Ledger associated with Collection" + GENERIC_IS_DISABLED_ERROR
+            logger.debug(msg, ledger=event_object.ledger, collection=event_object)
+            return True
+        case Collection():
+            logger.debug(NO_LEDGER_ERROR, collection=event_object)
+            return True
+        case _:
+            logger.exception(
+                IS_NOTIFICATIONS_DISABLED_ERROR + f"... checked unporocessable entity {type(event_object)}",
+                event_object=event_object,
+            )
+            return True
+
+2.3. похожий пример, но тут даже более явно - проверке подвергается один атрибут, доступ к которому есть как через объект Ledfer, так и через объект Collection. Также это могло быть две разные функции с ограничением при приеме параметра одним типом.
+
+def get_geography_point(event_object: Ledger | Collection) -> Point | None:
+    match event_object:
+        case Ledger(subcontractor=SubContractor(constrafor_company=sub_company)) | Collection(
+            ledger=Ledger(subcontractor=SubContractor(constrafor_company=sub_company))
+        ) if sub_company is not None:
+            return sub_company.address.longlat if sub_company.address else None
+    return None
+
+3. Интерфейс сложнее реализации.
+3.1. Написан сервис, работающи с разными приложениями к документу. Написан базовый класс (питонячий аналог интерфейса), который, в силу особенности приложений, реализован как частично реализованный класс, интерфейс для дочерних сервисов, которые должны реализовать один метод, который будет определять выбор того или иного шаблона для дальнейшего заполнения.
+
+class AppendixServiceAbstract(ABC):
+    def __init__(self, epp_contract: DocumentProject):
+        if epp_contract.category.name != self.EPP_CONTRACT_CATEGORY:
+            raise ValueError("epp_contract should be DocumentProject instance with EPP Contract category")
+        self.epp_contract = epp_contract
+        self.template_variables = self._set_template_variables()
+        self.template = self._set_template(epp_contract)
+        self.document = Document()
+
+    @abstractmethod  <---- ПОДЛЕЖИТ РЕАЛИЗАЦИИ ВНУТРИ ДОЧЕРНИХ КЛАССОВ
+    def _set_template(self, epp_contract: DocumentProject) -> DocumentTemplate:
+        pass
+
+    def get_template(self) -> DocumentTemplate:
+        return self.template
+
+    def check_template_is_not_none(self, template: DocumentTemplate) -> None:
+        # реализовано
+
+    def _set_template_variables(self):
+        # реализовано
+
+    def _get_variable_name_from_pattern(self, variable_pattern: str) -> str:
+        # реализовано
+
+    def _get_epp_variable_value(self, variable_pattern: str) -> Any:
+        # реализовано
+
+    def _get_doc_content(self, document_uuid: str) -> BytesIO:
+        # реализовано
+
+    def _search_and_replace_in_paragraph(self, pattern_obj: Pattern[str], paragraph: Paragraph) -> None:
+        # реализовано
+
+    def _render_document(self) -> None:
+        # реализовано
+
+    def create_pdf_file_from_template(self, appendix_contract: AppendixContractBase) -> None:
+        # реализовано
+
+    def update_pdf_file(self) -> None:
+        # реализовано
+
+и дочерние классы:
+class OfferSummaryService(AppendixServiceAbstract):
+    PDF_FILE_NAME_PREFIX = OFFER_SUMMARY_PREFIX_FILE_NAME
+    RELATED_NAME = OFFER_SUMMARY_RELATED_NAME
+
+    def _set_template(self, epp_contract: DocumentProject) -> DocumentTemplate:
+        active_templates = DocumentTemplate.objects.filter(google_file_deleted=False)
+        match epp_contract:
+            case DocumentProject(epp=EPPRequest(supplier=supplier)) if supplier is not None:
+                return active_templates.filter(category__name=OFFER_SUMMARY_SUPPLIER).first()
+            case DocumentProject(
+                epp=EPPRequest(ledger=Ledger(cross_collateralization=cross_collateralization))
+            ) if cross_collateralization:
+                return active_templates.filter(category__name=OFFER_SUMMARY_ROLLOVER).first()
+            case DocumentProject():
+                return active_templates.filter(category__name=OFFER_SUMMARY_GENERIC).first()
+            case _:
+                raise ValueError("epp_contract should be DocumentProject instance.")
+
+
+class NOAService(AppendixServiceAbstract):
+    PDF_FILE_NAME_PREFIX = NOA_PREFIX_FILE_NAME
+    RELATED_NAME = NOA_RELATED_NAME
+
+    def _set_template(self, epp_contract: DocumentProject) -> DocumentTemplate:
+        active_templates = DocumentTemplate.objects.filter(google_file_deleted=False)
+        match epp_contract:
+            case DocumentProject():
+                return active_templates.filter(category__name=NOTICE_OF_ASSIGNMENT).first()
+            case _:
+                raise ValueError("epp_contract should be DocumentProject instance.")
+
+
+3.2. есть сервисный класс EmailService, есть метод send_email, который принимает только параметры самого письма. Это создает ложное чувство простоты и готовой реализации отправки, в то время как для разных сред внутри этого метода реализовано разное поведение.
+class EmailService:
+    @staticmethod
+    def send_email(
+        template_identifier: str,
+        to: list,
+        dataset=None,
+        *,
+        from_email: str,
+        subject=None,
+        cc=None,
+        attachment=None,
+    ):
+        ...
+        if settings.BUILD_ENV != "production":
+            ...
+        
+тут можно было бы либо расширить класс или метод какими-то фргументами / параметрами для явного определения, какой службой отправки писем мы должны воспользоваться, либо разбить этот класс на подтипы в звисимости от среды.
+
+
+3.3. нашел такой интерфейс для работы с внешними сервисами
+
+class ABCContractorHandlingMixin:
+    ...
+    @abstractmethod
+    def fetch_contractors(self, *, new=True, **kwargs) -> list:
+        """Fetch contractors from integration API
+
+        :param new: fetch only contractors that have not been imported yet
+        :return: list of fetched contractors as external library objects or dicts from integration API
+        """
+
+    ...
+
+в реализации этого метода есть некая переменная, прописанная жестко, определяющая версию клиента.
+
+def fetch_contractors(self, *, new_only=True, latest_customer_dt=None):
+    # use minorversion=25 to get correct value for IsProject property on Customer objects
+    self.client.minorversion = 25
+    response = self.get_entities(entity=Entities.COMPANY, new_only=new_only, latest_dt=latest_customer_dt)
+    self.client.minorversion = None
+    return response
+
+Возможно стоило бы расширить в этом случае интерфейс для понимания на его уровне, что возможны дополнительные настройки версий клиентов.
+
+Вряд ли тут рзные типы данных помогли бы.
+Т.е. какие-то интерфейсы могли стать более наглядными, если их конкретизировать в разных типах данных, некоторые - нет.
