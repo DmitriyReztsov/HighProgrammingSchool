@@ -1,0 +1,67 @@
+Когда я делал игру в рамках кура ООАП-3, я решал, как мне сохранять ячейки игрового поля. Рассматривал и сохранение по ссылкам на уже сгенерированные ячейки с перегенерацией игрового поля, но в результате остановился на копировании только значений. Сейчас я думаю, что стоило все-таки сохранять новые копии ячеек игрового поля или даже сохранять поле как есть, а поле в новом состоянии генерировать заново (т.е. принять ячейки как иммутабельные).
+
+Сейчас:
+def get_plauground_state(self) -> list[Any]:
+    """предусловия: поле сгенерировано
+    постусловия: сформирован список с копиями значений ячеек по состоянию
+    на момент запроса
+    """
+
+    values_list = []
+    for y in range(self.dimension.y):
+        row_values = []
+        for x in range(self.dimension.x):
+            cell = self._get_cell(x, y)
+            row_values.append(cell.value)
+        values_list.append(row_values)
+    return values_list
+
+Возможный вариант:
+def get_plauground_state(self) -> list[Any]:
+    """предусловия: поле сгенерировано
+    постусловия: сформирован список с копиями ячеек по состоянию
+    на момент запроса
+    """
+
+    values_list = []
+    for y in range(self.dimension.y):
+        row_values = []
+        for x in range(self.dimension.x):
+            current_cell = self._get_cell(x, y)
+            copy_cell = current_cell.copy()  # добавить метод для копирования ячейки
+            row_values.append(copy_cell.value)
+        values_list.append(row_values)
+    return values_list
+
+
+В проекте есть сервис, который дополняет файл-пдф колонтитулом. Вместо того, чтобы записывать итоговый файл как аттрибут экземпляра класса сервиса и потом в проекте получать по ссылке из аттрибута, его можно сразу отдавать как объект.
+
+def set_footer_to_pdf_file(
+    self,
+    footer_text_lines: dict[int, str],
+    to_set_page_number: bool = False,
+) -> DjangoFile:
+    ...
+    self.output_file = DjangoFile(output_buffer, output_file_name)  # вместо этого
+
+
+def set_footer_to_pdf_file(
+    self,
+    footer_text_lines: dict[int, str],
+    to_set_page_number: bool = False,
+) -> DjangoFile:
+    ...
+    return DjangoFile(output_buffer, output_file_name)  # сразу отдавать объект
+
+это позволит при работе с сервисом в программе буть уверенным, что какое-то использование сервиса не перезатрет этот аттрибут и в конкретном месте проекта мы получим нужный нам файл
+
+
+Похожий случай в соседнем сервисе:
+
+def create_file_instance(self, file: DjangoFile) -> File:
+    created_filename = f"{self.file_name}.pdf"
+    return File.objects.create(  # сразу возвращаем объект, созданный в базе вместо того, чтоб записать его в аттрибут
+        file=file,
+        name=created_filename,
+        created_by=self.created_by,
+    )
