@@ -1,0 +1,253 @@
+1. Задача функции - найти и положить в запрос объект Membership, который представляет из себя таблицу, где пользователь User соединяется с компаниями Company, которым он принадлежит. Мембершип - объект, с которым работает проект вместо юзера, на нем проверяются все пермишены и принадлежности к группам. Использование prefetch_related и select_related призвано минимизировать запросы к базе для получения полей company, user_permissions, groups.
+
+def check_membership(request, company_id):
+    try:
+        selected_membership = (
+            Membership.objects.select_related("company")
+            .prefetch_related("user_permissions", "groups")
+            .get(user=request.user, company_id=company_id)
+        )
+        request.session["company_id"] = selected_membership.company_id
+    except Membership.DoesNotExist:
+        selected_membership = select_default_membership(request, company_id)
+    return selected_membership
+
+Преобразуем эту функцию для учета времени:
+
+import time
+
+
+def try_orm(request_user, company_id):
+    start = time.perf_counter_ns()
+    selected_membership = (
+        Membership.objects.select_related("company")
+        .prefetch_related("user_permissions", "groups")
+        .get(user=request_user, company_id=company_id)
+    )
+    print(selected_membership)
+    finish = time.perf_counter_ns()
+    print("Время работы: " + str(finish - start))
+
+для сравнения составим функцию с чистым SQL запросом:
+
+from django.db import connection
+
+
+def try_sql(request_user, company_id):
+    raw_sql = """SELECT
+            m.id AS membership_id,
+            m.user_id,
+            m.company_id,
+            
+            c.id AS company_id,
+            c.name AS company_name,
+
+            g.id AS group_id,
+            g.name AS group_name,
+
+            p.id AS permission_id,
+            p.name AS permission_name
+
+        FROM user_membership m
+
+        JOIN constrafor_company c ON m.company_id = c.id
+
+        LEFT JOIN user_membership_groups ug ON m.id = ug.membership_id
+        LEFT JOIN auth_group g ON ug.group_id = g.id
+
+        LEFT JOIN user_membership_user_permissions up ON m.id = up.membership_id
+        LEFT JOIN auth_permission p ON up.permission_id = p.id
+
+        WHERE m.user_id = %s AND m.company_id = %s;
+        """
+
+    start = time.perf_counter_ns()
+    cursor = connection.cursor()
+    cursor.execute(raw_sql, [request_user.id, company_id])
+    row = cursor.fetchall()
+    print(row)
+    finish = time.perf_counter_ns()
+    print("Время работы: " + str(finish - start))
+
+результаты:
+
+try_orm(request_user, company_id)
+miller.huffman@constrafor.com - 85
+Время работы: 8114344
+
+try_sql(request_user, company_id)
+[(85, 30, 73, 73, 'Constrafor Early Pay', 29, 'lender', None, None), (85, 30, 73, 73, 'Constrafor Early Pay', 83, 'epp_tab', None, None), (85, 30, 73, 73, 'Constrafor Early Pay', 41, 'project_admin_gc', None, None), (85, 30, 73, 73, 'Constrafor Early Pay', 76, 'sub_super_user', None, None), (85, 30, 73, 73, 'Constrafor Early Pay', 77, 'sales_ae_am', None, None), (85, 30, 73, 73, 'Constrafor Early Pay', 18, 'legal', None, None), (85, 30, 73, 73, 'Constrafor Early Pay', 19, 'legal_gc', None, None), (85, 30, 73, 73, 'Constrafor Early Pay', 84, 'sales_super_user', None, None)]
+Время работы: 2239552
+
+разница - в несколько раз. Происходит это за счет того, что prefetch_related преобразуется DjangoORM в столько дополнительных запросов, по скольким полям нужно сделать это объединение. Это еще без учета того, что Джанго сначала парсит и преобразует в некую древовидную структуру сам по себе запрос, потом его собирает, выполняет, а за тем собирает объект модели из ответа.
+
+В случае чистого SQL мы получаем каждую запись из таблиц, которые префетчим в отдельной строке и для дальнейщего использования без дополнительных запросов нужно самостоятельно собрать из них объект модели или какой-то иной объект. Тут нужно оценить в рамках проекта, нужно ли нам реально это и, возможно, нам будет достаточно получить айдишник Membership, или какой-то минимальный набор данных (айдишник компании по проекту используется очень часто, а вот пермишены - горазно реже), для которых завести отдельную структуру данных.
+
+В любом случае, обработка относительно небольших по объему записей будет быстрее, чем два+ дополнительных запроса к базе.
+
+1.1 Проверил также работу без префетчей.
+
+from django.db import connection, reset_queries
+
+
+def try_orm(request_user, company_id):
+    reset_queries()
+    start = time.perf_counter_ns()
+    selected_membership = Membership.objects.get(user=request_user, company_id=company_id)
+    print(selected_membership)
+    finish = time.perf_counter_ns()
+    print("Время работы: " + str(finish - start))
+    pprint(connection.queries)
+
+
+def try_sql(request_user, company_id):
+    global raw_sql
+
+    raw_sql = """SELECT
+            m.id AS membership_id,
+            m.user_id,
+            m.company_id,
+            uu.first_name,
+            uu.is_superuser
+        FROM user_membership m
+        INNER JOIN user_user uu ON uu.id = m.user_id 
+        WHERE m.user_id = %s AND m.company_id = %s;
+        """
+
+    start = time.perf_counter_ns()
+    cursor = connection.cursor()
+    cursor.execute(raw_sql, [request_user.id, company_id])
+    row = cursor.fetchall()
+    print(row)
+    finish = time.perf_counter_ns()
+    print("Время работы: " + str(finish - start))
+
+Джанго все равно применяет JOIN для подтягивания полей модели User, что, возможно, излишне. И время выполнения запроса Джанги - 0.001 сек из 0.002 общего времени. Сырой запрос без JOIN выполняется за 0.0006 сек. Сырой запрос с JOIN - за ту же 0.001 сек.
+
+Выводы тут очевидны - если бороться за производительность - то необходимо четко понимать, что мы собираемся использовать далее в проекте и как. Из Джанговского запроса половина времени уходит на парсинг запроса и сборку объекта модели (видимо).
+
+2.  Считается, что Джангго не оптимально производит bulk_update. Проверим. Даже при обновлении какого-то поля константой Джанга формирует запрос при помощи CAST(CASE ... WHEN).
+
+def try_orm(request_user, company_id):
+    reset_queries()
+    start = time.perf_counter_ns()
+    selected_memberships = Membership.objects.filter(company_id=company_id)
+    bulk_list = []
+    for mbr in selected_memberships:
+        mbr.position = "Chief"
+        bulk_list.append(mbr)
+
+    Membership.objects.bulk_update(bulk_list, ["position"])
+    # print(qs, updated)
+    finish = time.perf_counter_ns()
+    print("Время работы: " + str(finish - start))
+    pprint(connection.queries)
+
+
+def try_sql(request_user, company_id):
+    raw_sql = """UPDATE user_membership m
+        SET position = 'Chief'
+        WHERE m.company_id = %s;
+    """
+
+    start = time.perf_counter_ns()
+    with connection.cursor() as cursor:
+        cursor.execute(raw_sql, [company_id])
+        print("Updated:", cursor.rowcount)
+    finish = time.perf_counter_ns()
+    print("Время работы: " + str(finish - start))
+
+Результат:
+try_orm(request_user, company_id)
+Время работы: 10333704
+
+try_sql(request_user, company_id)
+Время работы: 9337185
+
+Но интересный эффект: для получения производительности у try_sql выше, чем у try_orm потребовалось изменить метод получения курсора. Это может быть связано со временем на получение курсора, которое у Джанги более оптимизировано. Переход в контекстный менеджер решил эту проблему и ненамного, но SQL показал более быстрым. Полагаю, что более сложная логика и большее количество записей, которые нужно будет обновить увеличат этот разрыв.
+
+3. Есть такой запрос с аннотациями:
+
+queryset = queryset.annotate(
+    quarter=Coalesce(
+        Case(
+            When(
+                financial_month__gt=FinancialDocument.UNDEFINED_PERIOD,
+                then=ExpressionWrapper(
+                    Cast(F("financial_month") / 3 + 1, IntegerField()), output_field=IntegerField()
+                ),
+            ),
+            default=None,
+        ),
+        F("financial_quarter"),
+        output_field=IntegerField(),
+    ),
+    period=Func(F("financial_year"), Value("-"), F("quarter"), function="CONCAT", output_field=CharField()),
+).order_by("-period", "-created_at")
+
+Его логическая суть состоит в том, чтобы отсортировать список документов по году + кварталу, при этом если квартала нет, то вычислить его исходя из месяца.
+
+from django.db.models import Case, CharField, ExpressionWrapper, F, Func, IntegerField, Value, When
+from django.db.models.functions import Cast, Coalesce
+
+
+def try_orm(request_user, company_id):
+    reset_queries()
+    start = time.perf_counter_ns()
+    queryset = FinancialDocument.objects.annotate(
+        quarter=Coalesce(
+            Case(
+                When(
+                    financial_month__gt=FinancialDocument.UNDEFINED_PERIOD,
+                    then=ExpressionWrapper(
+                        Cast(F("financial_month") / 3 + 1, IntegerField()), output_field=IntegerField()
+                    ),
+                ),
+                default=None,
+            ),
+            F("financial_quarter"),
+            output_field=IntegerField(),
+        ),
+        period=Func(F("financial_year"), Value("-"), F("quarter"), function="CONCAT", output_field=CharField()),
+    ).order_by("-period", "-created_at")
+    print(queryset)
+    finish = time.perf_counter_ns()
+    print("Время работы: " + str(finish - start))
+    pprint(connection.queries)
+
+
+def try_sql(request_user, company_id):
+    raw_sql = """SELECT *
+        FROM epp_financialdocument fd
+        ORDER BY
+            fd.financial_year,
+            CASE
+                WHEN fd.financial_quarter != -1 THEN fd.financial_quarter
+                WHEN fd.financial_month BETWEEN 1 AND 3 THEN 1
+                WHEN fd.financial_month BETWEEN 4 AND 6 THEN 2
+                WHEN fd.financial_month BETWEEN 7 AND 9 THEN 3
+                WHEN fd.financial_month BETWEEN 10 AND 12 THEN 4
+                ELSE NULL
+            END;
+    """
+
+    start = time.perf_counter_ns()
+    with connection.cursor() as cursor:
+        cursor.execute(raw_sql, [company_id])
+        print("Updated:", cursor.rowcount)
+        row = cursor.fetchall()
+        print(row)
+    finish = time.perf_counter_ns()
+    print("Время работы: " + str(finish - start))
+
+
+try_orm(request_user, company_id)
+Время работы: 1946109
+
+try_sql(request_user, company_id)
+Время работы: 580906
+
+В чистом SQL есть возможность описать логику получения квартала непосредственно в инструкции ORDER BY без необходимости работать с текстовыми данными. Как результат - экномия времени почти 4 раза. Учитывая, что текстовое представление больше нигде, кроме сротировки , в проектет не используется - это могло бы быть решением.
+
+В целом, использование сырого SQL на нашем проекте не приветствуется, хотя один любитель делать миграции с SQL есть :)
+Но при том, что ДжангоОРМ увеличивает время на выполнение запроса - она внутри остается оптимизированной и безопасной, а также более читаемой, чем чистый SQL, что на проекте, не треующем внимания к скорости запросов, приоритетнее. Чистые SQL могут использоваться для каких-то частных сложных случаев.
