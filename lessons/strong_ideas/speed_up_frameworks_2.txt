@@ -1,0 +1,136 @@
+1. В тестах долгое время полагались на повторяющийся порядок в результате запроса на ендпойнты, возвращающие список объектов. Поэтому были написаны тесты в таком ключе:
+
+response = self.client.get(self.url)
+self.assertEqual(response.data["result"][0]["id"], some_specific_object.id)
+
+В какой-то момент тесты стали падать на этих местах. Так мы узнали, что Джанго не гарантирует порядок ввозвращаемых результатах, если порядок явно не задан в кверисете.
+В документации на это не обращено внимание (насколько мне известно) и мы считали, что один и тот же порядок в возвращаемых значениях будет поддерживаться везде. Интересно, что локально он поддерживался и локально тесты проходили нормально, порядок рушился при запуске тестов в флоу гитхаба, когда их стали запускать в несколько потоков.
+
+2. При изучении ФастАПИ полагался на предположение, что запросы Аембика работают так же, как и ОРМ Джанги. От этого вначале было не понятно, почему у меня при обращении к связанным объектам выпаает ошибка, пока не изучил документацию в части того, как джойнить объекты.
+
+3. Писал интеграцию с сервисом Хабспот. Не мог понять, почему при использовании SDK ответ отличается от того, что указан на соответствующем ендпонте в документации АПИ. Т.е. при обращении через библиотеку получал иной ответ, чем при обращении на ендпойнт через, условно, requests. Изучив сам код SDK выяснилось, что там до сих пор использовалась предыдущая версия АПИ.
+
+
+Примеры, где можно улучшить типизацию результата функции/метода, чтобы явно исключить нежелательные формы обработки результата.
+1. Возврат результата валидации вместо tuple[bool, dict]
+
+В функции validate_documents_set_on_gaps() возвращается tuple[bool, dict], что неявно и может привести к ошибкам при обработке результата.
+
+def validate_documents_set_on_gaps(
+    documents: QuerySet[FinancialDocumentsCoreABC], data_to_validate: dict
+) -> tuple[bool, dict]:
+    ...
+    return is_valid, data_to_validate
+
+Можно ввести dataclass для результата:
+
+@dataclass
+class ValidationResult:
+    is_valid: bool
+    data: dict
+
+def validate_documents_set_on_gaps(
+    documents: QuerySet[FinancialDocumentsCoreABC], data_to_validate: dict
+) -> ValidationResult:
+    ...
+    return ValidationResult(is_valid, data_to_validate)
+
+Теперь результат нельзя спутать с другим tuple, по полям можно явно получить те или иные значения и IDE подскажет поля
+
+
+2. Явный тип результата для сервисных функций вместо Optional[Model]
+
+Функция get_file_by_uuid() возвращает либо объект, либо None, что вынуждает делать проверки на None и может привести к ошибкам.
+
+def get_file_by_uuid(file_uuid):
+    file = File.objects.filter(uuid=file_uuid).first()
+    return file
+
+Если ввести пользовательский тип результата:
+
+from typing import Generic, TypeVar, Union
+from dataclasses import dataclass
+
+T = TypeVar("T")
+
+@dataclass
+class Success(Generic[T]):
+    value: T
+
+@dataclass
+class NotFound:
+    reason: str
+
+FileResult = Union[Success[File], NotFound]
+
+то можно вернуть этот тип, который проверить при использовании
+
+def get_file_by_uuid(uuid: str) -> FileResult:
+    try:
+        file = File.objects.get(uuid=uuid)
+        return Success(file)
+    except File.DoesNotExist:
+        return NotFound("File not found")
+
+Теперь обработка результата становится явной:
+
+result = get_file_by_uuid(some_uuid)
+if isinstance(result, Success):
+    do_something(result.value)
+elif isinstance(result, NotFound):
+    handle_error(result.reason)
+
+
+3. Применил такой же подход в pdf_service.py, где можно улучшить тип результата функции/метода для явного контроля обработки:
+Методы get_pdf_file() возвращают просто DjangoFile. Если произошла ошибка (например, некорректные данные), это не отражается в типе результата.
+
+Введем пользовательский тип результата:
+
+@dataclass
+class PdfFileSuccess:
+    file: DjangoFile
+
+@dataclass
+class PdfFileError:
+    reason: str
+
+PdfFileResult = Union[PdfFileSuccess, PdfFileError]
+
+Теперь, например, в get_pdf_file:
+
+def get_pdf_file(
+    self,
+    file_name: str,
+    doc_settings: dict[str, float | tuple | str | int],
+) -> PdfFileResult:
+    try:
+        buffer = self._buffer_text_blocks_to_pdf(
+            page_size=doc_settings["page_size"],
+            left_margin=doc_settings["left_margin"],
+            right_margin=doc_settings["right_margin"],
+            top_margin=doc_settings["top_margin"],
+            bottom_margin=doc_settings["bottom_margin"],
+        )
+        created_filename = f"{file_name}.pdf"
+        return PdfFileSuccess(DjangoFile(buffer, created_filename))
+    except Exception as e:
+        return PdfFileError(str(e))
+
+
+То же самое при добавлении футера, когда set_footer_to_pdf_file возвращал просто DjangoFile, хотя могла возникнуть ошибка при чтении/записи пдф.
+
+def set_footer_to_pdf_file(
+    self,
+    footer_text_lines: dict[int, str],
+    to_set_page_number: bool = False,
+) -> PdfFileResult:
+    try:
+        self.input_file.seek(0)
+        output_buffer = BytesIO()
+        ...
+        return PdfFileSuccess(DjangoFile(output_buffer, output_file_name))
+    except Exception as e:
+        return PdfFileError(str(e))
+
+
+Теперь вызывающий код не может полагаться на то, что ему обязательно вернется файл, а должен проверить результат и забрать файл из типа успешного результата.
