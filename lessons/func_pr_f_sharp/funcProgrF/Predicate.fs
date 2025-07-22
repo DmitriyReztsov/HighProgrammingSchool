@@ -6,4 +6,4 @@ let prime =
     let rec checkDivisor (n, pivot) =
         pivot > 1 && (n % pivot = 0 || checkDivisor (n, pivot - 1))
     
-    fun n -> n > 1 && not (checkDivisor (n, int(System.Math.Sqrt(n))))
+    fun n -> n > 1 && not (checkDivisor (n, int(System.Math.Sqrt(float n))))
