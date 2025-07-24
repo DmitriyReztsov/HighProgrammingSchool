@@ -1,7 +1,6 @@
 // 17.1
 let rec pow = function
-    | (s, n) when n < 1 -> ""
-    | (s, 1) -> s
+    | (s, n) when n = 0 -> ""
     | (s, n) -> s + string (pow (s, n - 1))
 
 // 17.2
