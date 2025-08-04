@@ -17,10 +17,10 @@ let ListTests =
       Expect.equal (dnto 5) [5; 4; 3; 2; 1] "dnto 5 = [5; 4; 3; 2; 1]"
 
     testCase "List evenn 1, [2]" <| fun _ ->
-      Expect.equal (evenn 1) [2] "evenn 1 = [2]"
+      Expect.equal (evenn 1) [0] "evenn 1 = [0]"
 
-    testCase "List evenn 5, [2]" <| fun _ ->
-      Expect.equal (evenn 5) [2; 4; 6; 8; 10] "evenn 5 = [2; 4; 6; 8; 10]"
+    testCase "List evenn 6, [0; 2; 4; 6; 8; 10]" <| fun _ ->
+      Expect.equal (evenn 6) [0; 2; 4; 6; 8; 10] "evenn 6 = [0; 2; 4; 6; 8; 10]"
 
   ]
 
