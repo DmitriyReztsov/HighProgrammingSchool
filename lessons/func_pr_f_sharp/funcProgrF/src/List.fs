@@ -21,6 +21,6 @@ module List =
     let rec evenn n =
         let rec make_list i =
             match i with
-                | i when i = n -> [i * 2]
-                | i -> 2 * i :: make_list (i + 1)
+                | i when i = n -> [2 * (i - 1)]
+                | i -> 2 * (i - 1) :: make_list (i + 1)
         make_list 1
