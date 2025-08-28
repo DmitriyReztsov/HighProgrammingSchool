@@ -10,14 +10,18 @@ let f n =
 
 // 47.4.2
 let fibo n =
-    let mutable pre_pre = 0
-    let mutable pre = 1
-    let i = ref 3
+    match n with
+    | 0 -> 0
+    | 1 -> 1
+    | n ->
+        let mutable pre_pre = 0
+        let mutable pre = 1
+        let i = ref 2
 
-    while ! i <= n do
-        let new_pre = pre + pre_pre
-        pre_pre <- pre
-        pre <- new_pre
-        i := ! i + 1
-    
-    pre
+        while ! i <= n do
+            let new_pre = pre + pre_pre
+            pre_pre <- pre
+            pre <- new_pre
+            i := ! i + 1
+        
+        pre
