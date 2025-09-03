@@ -1,8 +1,8 @@
 open Expecto
-open src.Sequence
+open src.SequenceGen
 
 [<Tests>]
-let SequenceTests =
+let SequenceGenTests =
   testList "Sequence tests" [
     testCase "Sequence even_seq " <| fun _ ->
       Expect.equal (Seq.item 8 even_seq) 18 "even_seq 8th item = 18"
@@ -23,5 +23,5 @@ let SequenceTests =
 
 [<EntryPoint>]
 let main args =
-    runTestsWithCLIArgs [] args SequenceTests
+    runTestsWithCLIArgs [] args SequenceGenTests
 
