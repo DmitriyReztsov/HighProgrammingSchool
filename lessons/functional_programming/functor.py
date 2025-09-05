@@ -8,9 +8,6 @@ def add(x, y):
     return x + y
 
 
-# На основе функции add() сделайте функцию add10() с одним Just-аргументом, которая прибавляет 10 к Just- или
-# List-аргументу.
-
 add10 = add(10)
 Just(12).map(add10)
 ListMonad(1, 2, 3, 4).map(add10)
