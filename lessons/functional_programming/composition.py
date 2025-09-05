@@ -4,10 +4,6 @@ from pymonad.tools import curry
 from pymonad.reader import Compose
 
 
-# 3.1. Напишите функцию частичного применения tag(), которая получает на вход два строковых параметра: название
-# HTML-тега, и значение. Эта функция оборачивает значение тегом с учётом открывающего и закрывающего тега, например:
-# tag('b', 'string') # <b>string</b>
-# На основе tag подготовьте две функции bold и italic, которые оборачивают значение в теги b и i.
 @curry(2)
 def tag(tag_name: str, text: str) -> str:
     return f"<{tag_name}>{text}</{tag_name}>"
@@ -20,12 +16,6 @@ print(bold("bold text"))  # <b>bold text</b>
 print(italic("italic text"))  # <i>italic text</i>
 
 
-# 3.2. Расширьте функцию tag третьим параметром attr (тип словарь), который добавляет к тегу набор свойств (их может
-# быть несколько).
-# Например:
-# tag('li', {'class': 'list-group'}, 'item 23')
-# Результатом будет
-# <li class="list-group">item 23</li>
 @curry(3)
 def tag(tag_name: str, attr: dict, text: str) -> str:
     attrs_list = []
