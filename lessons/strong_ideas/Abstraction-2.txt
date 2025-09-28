@@ -1,0 +1,308 @@
+# 1
+class VisitSession(Model):
+    """Абстракция сессии посетителя (визитора) и оператора чата. Взаимодействие посетителя с оператором
+    оображается в набор характеристик и объектов: состояние сессии, объект чата (набор сообщений), объект оператора и
+    объект посетителя.
+
+    В процессе чата мы используем характеристики браузера, айпи пользователя, его язык, страницу, с
+    которой он пришел в чат. Эта информция оторажается в проперти и методы, реализуемые в дочерних классах-реализациях.
+    """
+
+    class State:
+
+        IDLE = 'idle'
+        INVITATION_SHOWING = 'showing'
+        INVITATION_SHOWING_AUTO = 'showing-auto'
+        INVITATION_SHOWING_BY_URL_PARAM = 'showing-by-url-param'
+        IDLE_AFTER_CHAT = 'idle-after-chat'
+        FIRST_QUESTION = 'first-question'
+        DEPARTMENT_SELECTION = 'department-selection'
+        CHAT_SHOWING = 'chat-showing'
+        CHAT = 'chat'
+        OFFLINE_MESSAGE = 'offline-message'
+        END = 'end'
+
+        GROUP_INVITATION_SHOWING = {INVITATION_SHOWING, INVITATION_SHOWING_AUTO, INVITATION_SHOWING_BY_URL_PARAM}
+
+        ALL = [IDLE, INVITATION_SHOWING, INVITATION_SHOWING_AUTO, INVITATION_SHOWING_BY_URL_PARAM,
+               IDLE_AFTER_CHAT, FIRST_QUESTION, DEPARTMENT_SELECTION, CHAT_SHOWING, CHAT, OFFLINE_MESSAGE, END]
+
+    def __init__(self, change_radio, account=None, field_name_to_value: dict = None, name_to_children=None, name_to_dict=None):
+        super().__init__(change_radio, account=account,
+                         field_name_to_value=field_name_to_value, name_to_children=name_to_children, name_to_dict=name_to_dict)
+
+        self.engine = None
+        self.home_node = None
+
+        # cache
+        self.__landing_info = None
+
+    @classmethod
+    def init(cls,
+             changes_radio,
+             account,
+
+             id_=None,
+             stored_to_db=None,
+             creation_ts=None,
+             modification_ts=None,
+             state=State.IDLE,
+             auth_token=None,
+             lang=None,
+             department_key=None,
+             ip=None,
+             ip_info=None,
+             user_agent=None,
+             landing_page=None,
+             visitor=None,
+             on_site=None,
+             alive=True,
+             hidden=False,
+             invitation=None,
+             chat=None,
+             prev_chats_count=None,
+             section=None,
+             section_for_assigned=None,
+             order=None,
+             actual_time=None,
+             current_polling_period=None,
+             cobrowsing_session=None,
+             alive_pages=None,
+             ):
+
+        now = time.time()
+
+        on_site = on_site or {
+            'value': True,
+            'cumulatedOnSiteTime': 0,
+            'lastComeBackTs': now,
+            'lastGoneAwayTs': None
+        }
+
+        result = VisitSession(
+            changes_radio,
+            account=account,
+            field_name_to_value={
+                'id': id_ or cls.new_session_id(),
+                'stored_to_db': stored_to_db,
+
+                'creation_ts': creation_ts or now,
+                'modification_ts': modification_ts or now,
+
+                'state': state,
+
+                'auth_token': auth_token or wm_utils.token_hex(16),
+                'lang': lang or '',
+                'department_key': department_key or '',
+                'ip': ip,
+                'ip_info': ip_info,
+                'user_agent': user_agent,
+                'landing_page': landing_page,
+                'visitor': visitor,
+                'on_site': on_site,
+                'alive': alive,
+                'hidden': hidden,
+                'invitation': invitation or Invitation.init(changes_radio, account),
+                'chat': chat,
+                'prev_chats_count': prev_chats_count or {'all_chats': 0, 'current_invitations_count': 0, 'current_chats_count': 0},
+                'section': section or VisitSessionSection.NOT_IN_CHAT,
+                'section_for_assigned': section_for_assigned or VisitSessionSection.NOT_IN_CHAT,
+                'order': order,
+                'actual_time': actual_time,
+                'current_polling_period': current_polling_period or account.settings.get('normal_polling_period'),
+                'cobrowsing_session': cobrowsing_session,
+                },
+            name_to_children={
+                'alive_pages': alive_pages or []},
+            name_to_dict={
+                'data': {},
+            })
+
+        result.home_node = multinode.node_name
+        return result
+
+    ...
+
+
+# 2
+class ScenarioRobotLogic:
+
+    """
+    Абстракция робота - автоответчика, который по определенному скрипту должен выполнить ряд действий. Имитация оператора,
+    который выполняет ряд однотипных действий. Отображаеся через доступные действия, результат действия и текущее
+    состояние. Как и оператор должен уметь реагировать на определенные события - присоединение посетителя к чату, на новое сообщение, на требование перевода на живого оператора, на перевод на него с другого оператора (робота или 
+    живого) и т.п. Отображаем через класс, от которого наследуем боле конкретных роботов.
+    """
+    action_type_to_params = {
+        'text': ['text'],
+        'go_to': ['state_id'],
+        'go_to_prev': [],
+        'redirect_to_dep': ['dep_key', 'is_current_dep', 'for_offline']
+    }
+
+    # params are strings by default
+    action_type_to_params_to_type = {
+        'redirect_to_dep': {
+            'is_current_dep': bool
+        }
+    }
+
+    class ActionResult:
+        CONTINUE = 'continue'
+        BREAK = 'break'
+
+    class RedirectToDepActionForOfflineCase:
+        FORCE_REDIRECT = 'force_redirect'
+        IGNORE = 'ignore'
+
+    def on_new_chat_created(self, ch):
+        if ch.state == Chat.State.QUEUE:
+            if not self.is_chat_supported(ch):
+                logging.warning(
+                    '@{acc}: unable to assign chat to robot {robot_id}, '
+                    '{channel_type} channels are not supported'.format(
+                        acc=self.account.name,
+                        robot_id=self.robot_id,
+                        channel_type=ch.session.visitor.channel_type))
+                return False
+
+            robot_operator = ch.session.account.get_operator(self.operator_id)
+
+            if robot_operator.matches((ch.session.lang, ch.session.department_key)):
+                ch.engine.process_event('sys.assign_to_robot', {'operator_id': self.operator_id})
+                return True
+
+        return False
+
+    def on_message_updated(self, ch, message, old_text, old_data):
+        pass
+
+    def on_new_message(self, ch, message):
+        pass
+
+    def on_new_visitor_file(self, ch):
+        pass
+
+    def on_new_visitor_draft(self, ch, visitor_draft):
+        pass
+
+    def on_chat_assigned_to_robot(self, ch):
+        pass
+
+    def on_chat_unassigned_from_robot(self, ch):
+        self._disable_keyboard(ch)
+
+    def _disable_keyboard(self, ch: Chat) -> None:
+        ch.engine.cancel_prev_keyboards(lambda m: m.author_id == self.operator_id)
+
+    def on_chat_redirected_to_robot(self, ch):
+        pass
+
+    def on_chat_redirected_from_robot(self, ch):
+        self._disable_keyboard(ch)
+
+    def on_chat_closed(self, ch):
+        self._disable_keyboard(ch)
+
+    def is_deleted(self):
+        return self.__deleted
+
+    def process_current_state(self, ch):
+        pass
+
+    def on_update_settings(self, settings):
+        pass
+
+    def do_unassign_from_robot(self, ch):
+        ch.engine.process_event('sys.unassign_from_robot')
+
+    def get_operator(self):
+        return self.account.get_operator(self.operator_id)
+
+    @staticmethod
+    def is_chat_supported(ch):
+        return not ch.session.visitor.channel_id or get_channel_settings(ch.session.visitor.channel_type).bots_support
+
+# 3
+class MessageBaseSerializer(serializers.Serializer):
+    """
+    не совсем уверен, но можно предположить, что Джанговский сериалайзер - абстракция объекта, которого он описывает.
+    В частности, тут мы описываем такое физическое явление, как сообщение в мессенджере. Оно для нас характеризуется
+    набором полей с информацией - числовой, временной и текстовой. Т.е. любой объект, содержащий весь или частичный 
+    набор этих полей, будет восприниматься нами как точное описание сообщения и к нему мы будем применять одинаковые
+    методы для обработки - полчим текст одинаковым способом, узнаем дату отправки сообщения, получим ссылку на медиа
+    и пр.
+
+    Получается отображение физического явления "сообщение" на структуру данных, которую формирует сериалайзер.
+
+    """
+    message_id = serializers.IntegerField()
+    from_ = TGFromSerializer(source="from")
+    date = UnixDateTimeField()
+    edit_date = UnixDateTimeField(required=False)
+    chat = TGChatSerialiser()
+    text = serializers.CharField(required=False)
+    entities = serializers.ListField(required=False)  # TODO if we need separate serializer for that
+    audio = TGAudioSerializer(required=False)
+    document = TGDocumentSerializer(required=False)
+    photo = serializers.ListField(child=TGPhotoSizeSerializer(), required=False)
+    sticker = TGStickerSerializer(required=False)
+    video = TGVideoSerializer(required=False)
+    video_note = TGVideoNoteSerializer(required=False)
+    voice = TGVoiceSeralizer(required=False)
+    caption = serializers.CharField(required=False)
+    contact = TGContactSerializer(required=False)
+    poll = TGPollSerializer(required=False)
+    location = TGLocationSerializer(required=False)
+
+# 4
+Если сериалайзер не может рассматриваться как абстракция, а скорее как просто транспорт данных, то предположим, что есть
+такой интерфейс (в существующем проекте этот функционал в разработке):
+class IMessageService:
+    """Класс принимает данные сообщения и определяет, что это сообщение из реального мира может из себя представлять.
+    """
+    def __init__(message_data: dict) -> None:
+        self.message_data = message_data
+
+    """Описываем фичи и особенности, которые могут характеризовать то, что мы получили и отобразили на код. 
+    Возврат из этих методов может быть в качестве полиморфных объектов, которые могут реализовывать другой интерфейс.
+    Или, если подумать об этом интерфейсе как о шаблоне, то все-таки имел бы смысл оставить тут обработку сообщения
+    как физического объекта и наглядно показать, что сообщение может содержать команду, файл, картинку, простой текст
+    или как-то форматированный.
+    """
+    def message_as_comand(self):
+        ...
+
+    def message_as_photo(self):
+        ...
+
+    def message_as_text(self):
+        ...
+
+# 5
+class InteractionStateMachine:
+    """
+    возможно, машина состояний может выступать как отражение процесса общения в чате на мэппинг состояний-действий.
+    Тогда мы можем увидеть выбранные для имплементации состояния, возникающие в процессе общения посетителя с оператором
+    На уровне рассуждений мы тут можем увидеть цепочку вызовов
+    """
+    def __init__(self) -> None:
+        self.__state_map = {
+            core_models.Interaction.State.QUEUE: self.__process_queue_state,
+            core_models.Interaction.State.ROUTING: self.__process_routing_state,
+            core_models.Interaction.State.CHATTING: self.__process_chatting_state,
+            core_models.Interaction.State.CHATTING_WITH_ROBOT: self.__process_chatting_with_robot_state,
+            core_models.Interaction.State.HOLD: self.__process_hold_state,
+            core_models.Interaction.State.INVITATION: self.__process_invitation_state,
+            core_models.Interaction.State.CLOSED_BY_OPERATOR: self.__process_closed_by_operator_state,
+            core_models.Interaction.State.CLOSED: self.__process_closed_state,
+        }
+
+
+Определение Дейкстры я понимаю, как необходимость держать в фокусе конечный результат в терминах реального мира.
+Например, я сейчас участвую в проекте по переписыванию легаси на новом фреймворке и иногда сваливаюсь в копирование 
+функций и методов из старого проекта. Но если держать в фокусе результат, выраженный в смыслах, которые должен достичь
+новый код, то реализация может оказаться другой (проще или просто другой - в зависимости от возможностей фреймворка).
+Приступая к реализации в новом проекте какой-то фичи старого проекта я стараюсь прежде всего понять конечный результат,
+смысл этой фичи, чаще прибегая к словесному описанию из мануала для пользователей, чем в изучения собственно кода.
+Т.е. по сути тут мануал с описанием фичи - самая высокая абстракция того, что отражено в старом коде.
