@@ -1,4 +1,6 @@
 import random
+from enum import Enum, auto
+from dataclasses import dataclass
 
 
 class Element:
@@ -38,6 +40,18 @@ class BoardState:
         return self._score
 
 
+class MatchDirection(Enum):
+    HORIZONTAL = auto()
+    VERTICAL = auto()
+
+@dataclass
+class Match:
+    direction: MatchDirection
+    row: int
+    col: int
+    length: int
+
+
 class Game:
     _symbols = ['A', 'B', 'C', 'D', 'E', 'F']
     _dimension = 8
@@ -60,31 +74,28 @@ class Game:
                 b.cells[row][col] = board.cells[row][col]
         return b
     
-    @staticmethod
-    def fill_board_empty_cells(board: Board) -> Board:
-        b = Game.clone_board(board)
-        for row in range(board.size):
-            for col in range(board.size):
-                if b.cells[row][col].symbol == Element.EMPTY:
-                    random_symbol = random.choice(Game._symbols)
-                    b.cells[row][col] = Element(random_symbol)
-        return b
+    # @staticmethod
+    # def fill_board_empty_cells(board: Board) -> Board:
+    #     b = Game.clone_board(board)
+    #     for row in range(board.size):
+    #         for col in range(board.size):
+    #             if b.cells[row][col].symbol == Element.EMPTY:
+    #                 random_symbol = random.choice(Game._symbols)
+    #                 b.cells[row][col] = Element(random_symbol)
+    #     return b
         
     @staticmethod
     def initialize_game() -> BoardState:
         # Create empty board
         board = Board(Game._dimension)
         
-        # Fill board with random symbols
-        board = Game.fill_board_empty_cells(board)
-
-        # TODO: Add check for initial combinations
-        # This would require implementing combination detection logic
-        # If combinations exist, refill those positions until no combinations exist
-        
-        
         # Create initial board state with score 0
         board_state = BoardState(board, 0)
+
+        # Fill board with random symbols
+        board_state = Game.fill_empty_spaces(board_state)
+        board_state = Game.process_cascade(board_state)
+
 
         return board_state
 
@@ -103,19 +114,182 @@ class Game:
         y1 = int(coords[2])
         
         # Swap elements
-        e = board.cells[x][y]
-        board.cells[x][y] = board.cells[x1][y1]
-        board.cells[x1][y1] = e
+        e = board.cells[y][x]
+        board.cells[y][x] = board.cells[y1][x1]
+        board.cells[y1][x1] = e
         
         return BoardState(board, bs.score)
+
+    @staticmethod
+    def add_match_if_valid(matches: list[Match], row: int, col: int, 
+                          length: int, direction: MatchDirection) -> None:
+        # Only consider combinations of 3 or more elements
+        if length >= 3:
+            matches.append(Match(direction, row, col, length))
+
+    @staticmethod
+    def find_matches(board: Board) -> list[Match]:
+        matches = []
+
+        # Horizontal combinations
+        for row in range(board.size):
+            start_col = 0
+            for col in range(1, board.size):
+                # Skip empty cells at start of row
+                if board.cells[row][start_col].symbol == Element.EMPTY:
+                    start_col = col
+                    continue
+
+                # If current cell is empty, break current sequence
+                if board.cells[row][col].symbol == Element.EMPTY:
+                    Game.add_match_if_valid(matches, row, start_col, 
+                                          col - start_col, MatchDirection.HORIZONTAL)
+                    start_col = col + 1
+                    continue
+
+                # Check symbol matches for non-empty cells
+                if board.cells[row][col].symbol != board.cells[row][start_col].symbol:
+                    Game.add_match_if_valid(matches, row, start_col, 
+                                          col - start_col, MatchDirection.HORIZONTAL)
+                    start_col = col
+                elif col == board.size - 1:
+                    Game.add_match_if_valid(matches, row, start_col, 
+                                          col - start_col + 1, MatchDirection.HORIZONTAL)
+
+        # Vertical combinations
+        for col in range(board.size):
+            start_row = 0
+            for row in range(1, board.size):
+                # Skip empty cells at start of column
+                if board.cells[start_row][col].symbol == Element.EMPTY:
+                    start_row = row
+                    continue
+
+                # If current cell is empty, break current sequence
+                if board.cells[row][col].symbol == Element.EMPTY:
+                    Game.add_match_if_valid(matches, start_row, col, 
+                                          row - start_row, MatchDirection.VERTICAL)
+                    start_row = row + 1
+                    continue
+
+                # Check symbol matches for non-empty cells
+                if board.cells[row][col].symbol != board.cells[start_row][col].symbol:
+                    Game.add_match_if_valid(matches, start_row, col, 
+                                          row - start_row, MatchDirection.VERTICAL)
+                    start_row = row
+                elif row == board.size - 1:
+                    Game.add_match_if_valid(matches, start_row, col, 
+                                          row - start_row + 1, MatchDirection.VERTICAL)
+
+        return matches
+    
+    @staticmethod
+    def remove_matches(current_state: BoardState, matches: list[Match]) -> BoardState:
+        if not matches:
+            return current_state
+
+        # Step 1: Mark cells for removal
+        marked_cells = Game.mark_cells_for_removal(current_state.board, matches)
+
+        # Step 2: Apply gravity
+        gravity_applied_cells = Game.apply_gravity(marked_cells, current_state.board.size)
+
+        # Step 3: Calculate score
+        removed_count = sum(match.length for match in matches)
+        new_score = current_state.score + Game.calculate_score(removed_count)
+
+        # Create new board with updated cells
+        new_board = Board(current_state.board.size)
+        new_board.cells = gravity_applied_cells
+
+        # Return NEW state
+        return BoardState(new_board, new_score)
+
+    @staticmethod
+    def mark_cells_for_removal(board: Board, matches: list[Match]) -> list[list[Element]]:
+        # Create a deep copy of the board cells
+        new_cells = []
+        for row in board.cells:
+            new_row = []
+            for cell in row:
+                new_row.append(Element(cell.symbol))
+            new_cells.append(new_row)
+
+        # Mark matched cells as empty
+        for match in matches:
+            for i in range(match.length):
+                row = match.row if match.direction == MatchDirection.HORIZONTAL else match.row + i
+                col = match.col + i if match.direction == MatchDirection.HORIZONTAL else match.col
+                new_cells[row][col] = Element(Element.EMPTY)
+
+        return new_cells
+
+    @staticmethod
+    def apply_gravity(cells: list[list[Element]], size: int) -> list[list[Element]]:
+        # Initialize new empty cells
+        new_cells = []
+        for _ in range(size):
+            row = []
+            for _ in range(size):
+                row.append(Element(Element.EMPTY))
+            new_cells.append(row)
+
+        # Apply gravity column by column
+        for col in range(size):
+            new_row = size - 1
+            for row in range(size - 1, -1, -1):
+                if cells[row][col].symbol != Element.EMPTY:
+                    new_cells[new_row][col] = cells[row][col]
+                    new_row -= 1
+
+        return new_cells
+
+    @staticmethod
+    def calculate_score(removed_count: int) -> int:
+        # Basic scoring system: 10 points per element
+        return removed_count * 10
+
+    @staticmethod
+    def fill_empty_spaces(current_state: BoardState) -> BoardState:
+        if not current_state.board.cells:
+            return current_state
+
+        # Create a deep copy of the board cells
+        new_cells = []
+        for row in current_state.board.cells:
+            new_row = []
+            for cell in row:
+                new_row.append(Element(cell.symbol))
+            new_cells.append(new_row)
+
+        # Fill empty cells with random symbols
+        for row in range(current_state.board.size):
+            for col in range(current_state.board.size):
+                if new_cells[row][col].symbol == Element.EMPTY:
+                    random_symbol = random.choice(Game._symbols)
+                    new_cells[row][col] = Element(random_symbol)
+
+        # Create new board with filled cells
+        new_board = Board(current_state.board.size)
+        new_board.cells = new_cells
+
+        return BoardState(new_board, current_state.score)
+    
+    def process_cascade(bs: BoardState) -> BoardState:
+        matches = Game.find_matches(bs.board)
+        new_bs = Game.remove_matches(bs, matches)
+        if bs is new_bs:
+            return new_bs
+        bs = Game.fill_empty_spaces(new_bs)
+        return Game.process_cascade(bs)
 
 
 def main():
     bs = Game.initialize_game()
-    while(True):
+    while True:
         Game.draw(bs.board)
         bs = Game.read_move(bs)
-
+        bs = Game.process_cascade(bs)
 
 if __name__ == "__main__":
     main()
