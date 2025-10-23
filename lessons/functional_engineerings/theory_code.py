@@ -1,6 +1,6 @@
 import random
-from enum import Enum, auto
 from dataclasses import dataclass
+from enum import Enum, auto
 
 
 class Element:
@@ -20,6 +20,13 @@ class Board:
                 cells_line.append(self.set_cell_symbol())
             self.cells.append(cells_line)
 
+    @classmethod
+    def init(cls, size: int) -> "Board":
+        return Board(size)
+    
+    def init_state(self, score: int) -> "BoardState":
+        return BoardState(self, score)
+
     def set_cell_symbol(self, symbol: str = None):
         if not symbol:
             symbol = Element.EMPTY
@@ -38,6 +45,12 @@ class BoardState:
     @property
     def score(self):
         return self._score
+    
+    def fill_empty_cells(self) -> "BoardState":
+        return Game.fill_empty_spaces(self)
+    
+    def do_process_cascade(self) -> "BoardState":
+        return Game.process_cascade(self)
 
 
 class MatchDirection(Enum):
@@ -73,31 +86,10 @@ class Game:
             for col in range(board.size):
                 b.cells[row][col] = board.cells[row][col]
         return b
-    
-    # @staticmethod
-    # def fill_board_empty_cells(board: Board) -> Board:
-    #     b = Game.clone_board(board)
-    #     for row in range(board.size):
-    #         for col in range(board.size):
-    #             if b.cells[row][col].symbol == Element.EMPTY:
-    #                 random_symbol = random.choice(Game._symbols)
-    #                 b.cells[row][col] = Element(random_symbol)
-    #     return b
         
     @staticmethod
-    def initialize_game() -> BoardState:
-        # Create empty board
-        board = Board(Game._dimension)
-        
-        # Create initial board state with score 0
-        board_state = BoardState(board, 0)
-
-        # Fill board with random symbols
-        board_state = Game.fill_empty_spaces(board_state)
-        board_state = Game.process_cascade(board_state)
-
-
-        return board_state
+    def initialize_game(board_size: int) -> BoardState:
+        return Board.init(board_size).init_state(0).fill_empty_cells().do_process_cascade()
 
     @staticmethod
     def read_move(bs: BoardState) -> BoardState:
@@ -285,7 +277,7 @@ class Game:
 
 
 def main():
-    bs = Game.initialize_game()
+    bs = Game.initialize_game(Game._dimension)
     while True:
         Game.draw(bs.board)
         bs = Game.read_move(bs)
