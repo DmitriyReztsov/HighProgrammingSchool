@@ -1,3 +1,5 @@
+from typing import Callable
+
 import random
 from dataclasses import dataclass
 from enum import Enum, auto
@@ -19,13 +21,6 @@ class Board:
             for _ in range(size):
                 cells_line.append(self.set_cell_symbol())
             self.cells.append(cells_line)
-
-    @classmethod
-    def init(cls, size: int) -> "Board":
-        return Board(size)
-    
-    def init_state(self, score: int) -> "BoardState":
-        return BoardState(self, score)
 
     def set_cell_symbol(self, symbol: str = None):
         if not symbol:
@@ -51,6 +46,9 @@ class BoardState:
     
     def do_process_cascade(self) -> "BoardState":
         return Game.process_cascade(self)
+    
+    def pipe(self, func: Callable) -> "BoardState":
+        return func(self)
 
 
 class MatchDirection(Enum):
@@ -68,6 +66,7 @@ class Match:
 class Game:
     _symbols = ['A', 'B', 'C', 'D', 'E', 'F']
     _dimension = 8
+    _randomizer = random.choice
     
     @staticmethod
     def draw(board: Board) -> None:
@@ -89,7 +88,7 @@ class Game:
         
     @staticmethod
     def initialize_game(board_size: int) -> BoardState:
-        return Board.init(board_size).init_state(0).fill_empty_cells().do_process_cascade()
+        return BoardState(Board(board_size), 0).pipe(BoardState.fill_empty_cells).pipe(BoardState.do_process_cascade)
 
     @staticmethod
     def read_move(bs: BoardState) -> BoardState:
@@ -242,9 +241,12 @@ class Game:
         return removed_count * 10
 
     @staticmethod
-    def fill_empty_spaces(current_state: BoardState) -> BoardState:
+    def fill_empty_spaces(current_state: BoardState, randomizer: Callable = None) -> BoardState:
         if not current_state.board.cells:
             return current_state
+        
+        if not randomizer:
+            randomizer = Game._randomizer
 
         # Create a deep copy of the board cells
         new_cells = []
@@ -258,7 +260,7 @@ class Game:
         for row in range(current_state.board.size):
             for col in range(current_state.board.size):
                 if new_cells[row][col].symbol == Element.EMPTY:
-                    random_symbol = random.choice(Game._symbols)
+                    random_symbol = randomizer(Game._symbols)
                     new_cells[row][col] = Element(random_symbol)
 
         # Create new board with filled cells
@@ -269,11 +271,13 @@ class Game:
     
     def process_cascade(bs: BoardState) -> BoardState:
         matches = Game.find_matches(bs.board)
+        if not matches:
+            return bs
         new_bs = Game.remove_matches(bs, matches)
-        if bs is new_bs:
-            return new_bs
-        bs = Game.fill_empty_spaces(new_bs)
-        return Game.process_cascade(bs)
+        return (
+            new_bs.pipe(lambda bs: Game.fill_empty_spaces(bs, randomizer=Game._randomizer))
+            .pipe(lambda nbs: Game.process_cascade(nbs))
+        )
 
 
 def main():
