@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Any, Callable
 
 import random
 from dataclasses import dataclass
@@ -69,7 +69,8 @@ class Game:
     _randomizer = random.choice
     
     @staticmethod
-    def draw(board: Board) -> None:
+    def draw(bs: BoardState, ask: bool = False) -> BoardState:
+        board = bs.board
         print("  0 1 2 3 4 5 6 7")
         for i in range(board.size):
             print(f"{i} ", end="")
@@ -77,6 +78,9 @@ class Game:
                 print(f"{board.cells[i][j].symbol} ", end="")
             print()
         print()
+        if ask:
+            input()
+        return bs
 
     @staticmethod
     def clone_board(board) -> Board:
@@ -93,7 +97,7 @@ class Game:
     @staticmethod
     def read_move(bs: BoardState) -> BoardState:
         print(">")
-        user_input = input()
+        user_input = input("Your turn: ")
         if user_input == "q":
             exit(0)
             
@@ -273,17 +277,28 @@ class Game:
         matches = Game.find_matches(bs.board)
         if not matches:
             return bs
-        new_bs = Game.remove_matches(bs, matches)
-        return (
-            new_bs.pipe(lambda bs: Game.fill_empty_spaces(bs, randomizer=Game._randomizer))
-            .pipe(lambda nbs: Game.process_cascade(nbs))
+
+        return Game.pipe(
+            bs,
+            lambda bs: Game.remove_matches(bs, matches),
+            lambda bs: Game.draw(bs, DEBUG),
+            lambda bs: Game.fill_empty_spaces(bs, randomizer=Game._randomizer),
+            lambda bs: Game.draw(bs, DEBUG),
+            Game.process_cascade
         )
 
+    def pipe(value: Any, *funcs: Callable) -> Any:
+        for f in funcs:
+            value = f(value)
+        return value
 
 def main():
+    global DEBUG
+
+    DEBUG = True
     bs = Game.initialize_game(Game._dimension)
     while True:
-        Game.draw(bs.board)
+        Game.draw(bs)
         bs = Game.read_move(bs)
         bs = Game.process_cascade(bs)
 
