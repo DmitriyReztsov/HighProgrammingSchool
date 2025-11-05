@@ -1,0 +1,242 @@
+# 1
+def can_process_with_interaction(
+    visitor: core_models.Visitor, channel: core_models.Channel, text: str, tg_user_lang: str, view: APIView
+) -> tuple[bool, Optional[core_models.Interaction]]:
+    from gate.telegram.views import TGBotCommand
+
+    if text:
+        if text == TGBotCommand.START and channel.data.get("chat_on_start") is not True:
+            if on_start_reply := channel.data.get("reply_on_start", False):
+                on_start_reply_text = on_start_reply.get(tg_user_lang, "ru")
+                invoke_telegram(channel, "sendMessage", {"chat_id": visitor.channel_ext_id, "text": on_start_reply_text})
+            return False, None
+
+        if not visitor.active_interaction_exists and text != TGBotCommand.START and channel.data.get("chat_on_start") is True:
+            return False, None
+
+        if (
+            (channel.data.get("chat_on_start") is True)
+            and (text == TGBotCommand.START)
+            and (on_start_reply := channel.data.get("reply_on_start", False))
+            and not visitor.active_interaction_exists
+        ):
+            on_start_reply_text = on_start_reply.get(tg_user_lang, "ru")
+
+            models_controller.create_model(
+                core_models.Message,
+                dict(
+                    visitor=visitor,
+                    kind=core_models.Message.Kind.OPERATOR,
+                    sub_kind="chat-info-message",
+                    text=on_start_reply_text,
+                ),
+            )
+
+        if (channel.data.get("chat_on_start") is True) is (text == TGBotCommand.START) and not visitor.active_interaction_exists:
+            return (active_interaction := view.try_to_create_interaction(channel, visitor)) is not None, active_interaction
+
+    return True, visitor.active_interaction
+
+есть ряд случаев, когда надо начинать чат тем или иным образом: если настройка в Истине и приветственный текст - создаем
+чат, если настройка в Ложь и текст - не создаем, но показываем, если нет ни того, ни другого - третий вариант с развилкой
+на установку отдела. Все эти случаи, получается, описали через if...else
+
+# 2
+class PeriodTypeDateFrameTogetherValidator:
+    requires_context = True
+    missing_message = "This field is required."
+    START = "start"
+    END = "end"
+    frame_names = [START, END]
+
+    MONTH = "month"
+    DAY = "day"
+    period_type_required_fields = {
+        PeriodType.YEAR_TO_DATE.value: {},
+        PeriodType.AS_OF_DATE.value: {},
+        PeriodType.FULL_YEAR.value: {
+            START: (MONTH, DAY),
+            END: (MONTH, DAY),
+        },
+        PeriodType.MONTHLY.value: {
+            START: (DAY,),
+            END: (DAY,),
+        },
+        PeriodType.QUARTERLY.value: {
+            START: (MONTH, DAY),
+            END: (MONTH, DAY),
+        },
+        PeriodType.UNDEFINED.value: {},
+    }
+    QUARTERS_START_MONTHS_NUMS = [1, 4, 7, 10]
+    YEAR_START_MONTH_NUM = 1
+    MONTH_START_DAY_NUM = 1
+
+    QUARTERS_END_MONTHS_NUMS = [3, 6, 9, 12]
+    YEAR_END_MONTH_NUM = 12
+
+    def __init__(self, period_type_field: str, date_frame_mapping_fields: dict[str, str], message: str | None = None):
+        self.period_type_field = period_type_field
+        self._validate_period_mapping(date_frame_mapping_fields)
+        self.date_frame_mapping_fields = date_frame_mapping_fields
+
+    def _validate_period_mapping(self, date_frame_mapping_fields: dict[str, str]) -> None:
+        if not isinstance(date_frame_mapping_fields, dict):
+            raise TypeError("periods_mapping_fields must be a dictionary")
+        if other_fields := set(date_frame_mapping_fields.keys()) - set(self.frame_names):
+            raise ValueError(f"Invalid fields in periods_mapping_fields: {other_fields}")
+
+    def _get_acceptable_values_for_start(self, period_type: str, date_value: date = None) -> list:
+        if period_type == f"{PeriodType.QUARTERLY.value}_{self.MONTH}":
+            return self.QUARTERS_START_MONTHS_NUMS
+        if period_type == f"{PeriodType.FULL_YEAR.value}_{self.MONTH}":
+            return [self.YEAR_START_MONTH_NUM]
+        if "day" in period_type:
+            return [self.MONTH_START_DAY_NUM]
+        return []
+
+    def _get_acceptable_values_for_end(self, period_type: str, date_value: date) -> list:
+        if period_type == f"{PeriodType.QUARTERLY.value}_{self.MONTH}":
+            return self.QUARTERS_END_MONTHS_NUMS
+        if period_type == f"{PeriodType.FULL_YEAR.value}_{self.MONTH}":
+            return [self.YEAR_END_MONTH_NUM]
+        if "day" in period_type:
+            return [monthrange(date_value.year, date_value.month)[1]]
+        return []
+
+    def _validate_date_by_date_type(
+        self, attrs_to_check: list, period_type: str, get_acceptables_func: callable, date_value: date
+    ) -> None:
+        for attr in attrs_to_check:
+            key_period_type = f"{period_type}_{attr}"
+            acceptable_values = get_acceptables_func(key_period_type, date_value)
+            if getattr(date_value, attr) not in acceptable_values:
+                raise ValidationError(f"Start date and end date must be in consistence with {period_type}")
+
+    def _validate_dates_order(self, start_date: date, end_date: date) -> None:
+        if start_date > end_date:
+            raise ValidationError(
+                {
+                    self.date_frame_mapping_fields[self.START]: "Start date must be less than or equal to end date.",
+                    self.date_frame_mapping_fields[self.END]: "End date must be greater than or equal to start date.",
+                },
+                code="invalid",
+            )
+
+    def _check_required_fields(self, attrs: dict, serializer: Serializer):
+        start_field_name = self.date_frame_mapping_fields.get(self.START)
+        date_value_start = attrs.get(start_field_name) or getattr(serializer.instance, start_field_name, None)
+
+        end_field_name = self.date_frame_mapping_fields.get(self.END)
+        date_value_end = attrs.get(end_field_name) or getattr(serializer.instance, end_field_name, None)
+
+        if date_value_start is None and date_value_end is None:
+            return
+
+        if any(date_value is None for date_value in [date_value_start, date_value_end]):
+            raise ValidationError(
+                {
+                    self.date_frame_mapping_fields[self.START]: self.missing_message,
+                    self.date_frame_mapping_fields[self.END]: self.missing_message,
+                },
+                code="required",
+            )
+
+        self._validate_dates_order(date_value_start, date_value_end)
+
+        period_type = attrs.get(self.period_type_field) or serializer.instance.period_type
+        required_periods_dict = self.period_type_required_fields.get(period_type)
+
+        if not required_periods_dict:
+            return
+
+        periods_to_check_start = required_periods_dict.get(self.START)
+        periods_to_check_end = required_periods_dict.get(self.END)
+
+        self._validate_date_by_date_type(
+            attrs_to_check=periods_to_check_start,
+            period_type=period_type,
+            get_acceptables_func=self._get_acceptable_values_for_start,
+            date_value=date_value_start,
+        )
+
+        self._validate_date_by_date_type(
+            attrs_to_check=periods_to_check_end,
+            period_type=period_type,
+            get_acceptables_func=self._get_acceptable_values_for_end,
+            date_value=date_value_end,
+        )
+
+    def _is_period_type_valid(self, attrs: dict, serializer: Serializer) -> None:
+        if (
+            attrs.get(self.period_type_field) is None
+            and getattr(serializer.instance, self.period_type_field, None) is None
+        ):
+            raise ValidationError(
+                {self.period_type_field: self.missing_message},
+                code="required",
+            )
+
+    def __call__(self, attrs: dict, serializer: Serializer) -> None:
+        self._is_period_type_valid(attrs, serializer)
+        self._check_required_fields(attrs, serializer)
+
+
+Не совсем краевые случаи, но в целом кейс выглядел как один краевой случай - надо проверить состав переданного периода дат
+в зависимости от типа периода. Вроде как общее поле, общий тип данных, но потребовался кастомный валидатор, который
+парсит данные, ему нужно знать, какая дата - начало, какая - конец периода, взависимости от типа он проверяет те или иные
+поля. И решение было так же перебюирать жестко закрепленные комбинации из типа и частей дат.
+
+# 3
+def process_epp_request(request_id):
+    try:
+        epp_request = EPPRequest.objects.get(id=request_id)
+    except ObjectDoesNotExist:
+        logger.error(f"EPP Request {request_id} not found")
+        return None
+        
+    if not epp_request.invoice:
+        logger.error(f"EPP Request {request_id} has no invoice attached")
+        return None
+        
+    # Проверка статуса
+    if epp_request.status != EPPRequestStatus.PENDING:
+        logger.warning(f"EPP Request {request_id} is not in PENDING status")
+        return None
+
+проверяем на наличие объектов. Не то, что бы сложная логика, но наверное можно было бы как-то изящнее сделать.
+
+
+# 4
+def validate_financial_document_dates(document):
+    today = date.today()
+    
+    # Проверка будущих дат
+    if document.date > today:
+        raise ValidationError("Document date cannot be in the future")
+        
+    # Проверка слишком старых документов
+    if (today - document.date).days > 365:
+        raise ValidationError("Document is too old (more than 1 year)")
+        
+    # Проверка периодов
+    if document.start_date and document.end_date:
+        if document.start_date > document.end_date:
+            raise ValidationError("Start date cannot be after end date")
+
+здесь еще одна проверка нужных дат и документов, разбитая на проверки конкретных значений. Тоже, наверное, можно было бы
+как-то изящнее поступить.
+
+
+После прочтения материала.
+Под идеи из материала - сделать основной случай явным, а краевые обработать не как краевые, а как собственные классы - 
+наиболее подошлли бы мои случаи 1 и 2. Случай 1 можно было бы представить как отдельные пути обработки входящих сообщений:
+один путь для просто сообщений (50+ % случаев) и остальные (кога надо начинать диалог с приветственной фразы, когда надо
+предварительно выбрать отдел обращения) - как собственные пути. Возможно, в собственных сервисах. После обработки первого
+сообщения (в чем они друг от друга и отличаются) - можно направить обработку дальнейшего диалога в общий сервис.
+
+Случай 2 - там смысл мог бы быть в том, чтоб не пытаться валидировать разные периоды времени в одном валидаторе. Разные
+периоды могут принадлежать просто разным типам документов - просто разести документы и их валидации по разным контроллерам,
+сервисам и валидаторам.
+
+Остальные случаи - это просто проверка каких-то параметров, не такие сложные.
