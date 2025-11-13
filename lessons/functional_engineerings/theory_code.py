@@ -1,4 +1,4 @@
-from typing import Any, Callable
+from typing import Any, Callable, List, Iterable
 
 import random
 from dataclasses import dataclass
@@ -10,6 +10,12 @@ class Element:
     
     def __init__(self, symbol: str):
         self.symbol = symbol
+
+    def is_empty(self) -> bool:
+        return self.symbol == Element.EMPTY
+
+    def equals(self, other: 'Element') -> bool:
+        return self.symbol == other.symbol
 
 
 class Board:
@@ -55,12 +61,41 @@ class MatchDirection(Enum):
     HORIZONTAL = auto()
     VERTICAL = auto()
 
-@dataclass
-class Match:
-    direction: MatchDirection
+@dataclass(frozen=True)
+class Position:
     row: int
     col: int
-    length: int
+
+
+@dataclass(frozen=True)
+class Match:
+    name: str                  # Name for identification
+    origin: Position          # Absolute position of top-left corner
+    width: int               # Rectangle width (in columns)
+    height: int              # Rectangle height (in rows)
+    pattern: List[Position]  # Relative positions inside rectangle
+
+    def __post_init__(self):
+        # Validate pattern positions are within bounds
+        for pos in self.pattern:
+            if (pos.row < 0 or pos.row >= self.height or 
+                pos.col < 0 or pos.col >= self.width):
+                raise ValueError("Relative position outside bounds")
+        
+        # Convert pattern to immutable tuple
+        object.__setattr__(self, 'pattern', tuple(self.pattern))
+
+    def get_absolute_positions(self) -> Iterable[Position]:
+        """
+        Returns absolute positions of the pattern on the board
+        """
+        origin_row = self.origin.row
+        origin_col = self.origin.col
+        
+        return (
+            Position(origin_row + rel_pos.row, origin_col + rel_pos.col)
+            for rel_pos in self.pattern
+        )
 
 
 class Game:
@@ -123,82 +158,95 @@ class Game:
             matches.append(Match(direction, row, col, length))
 
     @staticmethod
-    def find_matches(board: Board) -> list[Match]:
-        matches = []
+    def find_matches(bs: BoardState, patterns: list[Match] = None) -> list[Match]:
+        """
+        Find all matches on the board based on provided patterns
+        
+        Args:
+            bs: Current board state
+            patterns: List of pattern templates to search for
+            
+        Returns:
+            List of found matches with absolute positions
+        """
+        if patterns is None:
+            patterns = Game.generate_level_matches(1)  # Default patterns
+            
+        found_matches = []
+        board = bs.board
 
-        # Horizontal combinations
-        for row in range(board.size):
-            start_col = 0
-            for col in range(1, board.size):
-                # Skip empty cells at start of row
-                if board.cells[row][start_col].symbol == Element.EMPTY:
-                    start_col = col
-                    continue
+        for pattern in patterns:
+            # Skip empty patterns
+            if not pattern.pattern:
+                continue
 
-                # If current cell is empty, break current sequence
-                if board.cells[row][col].symbol == Element.EMPTY:
-                    Game.add_match_if_valid(matches, row, start_col, 
-                                          col - start_col, MatchDirection.HORIZONTAL)
-                    start_col = col + 1
-                    continue
+            # Search through all possible positions
+            for row in range(board.size - pattern.height + 1):
+                for col in range(board.size - pattern.width + 1):
+                    candidate_origin = Position(row, col)
+                    first_element = board.cells[row][col]
 
-                # Check symbol matches for non-empty cells
-                if board.cells[row][col].symbol != board.cells[row][start_col].symbol:
-                    Game.add_match_if_valid(matches, row, start_col, 
-                                          col - start_col, MatchDirection.HORIZONTAL)
-                    start_col = col
-                elif col == board.size - 1:
-                    Game.add_match_if_valid(matches, row, start_col, 
-                                          col - start_col + 1, MatchDirection.HORIZONTAL)
+                    # Skip empty elements
+                    if first_element.is_empty():
+                        continue
 
-        # Vertical combinations
-        for col in range(board.size):
-            start_row = 0
-            for row in range(1, board.size):
-                # Skip empty cells at start of column
-                if board.cells[start_row][col].symbol == Element.EMPTY:
-                    start_row = row
-                    continue
+                    is_valid = True
 
-                # If current cell is empty, break current sequence
-                if board.cells[row][col].symbol == Element.EMPTY:
-                    Game.add_match_if_valid(matches, start_row, col, 
-                                          row - start_row, MatchDirection.VERTICAL)
-                    start_row = row + 1
-                    continue
+                    # Check all pattern positions
+                    for rel_pos in pattern.pattern:
+                        abs_row = row + rel_pos.row
+                        abs_col = col + rel_pos.col
 
-                # Check symbol matches for non-empty cells
-                if board.cells[row][col].symbol != board.cells[start_row][col].symbol:
-                    Game.add_match_if_valid(matches, start_row, col, 
-                                          row - start_row, MatchDirection.VERTICAL)
-                    start_row = row
-                elif row == board.size - 1:
-                    Game.add_match_if_valid(matches, start_row, col, 
-                                          row - start_row + 1, MatchDirection.VERTICAL)
+                        if (board.cells[abs_row][abs_col].is_empty() or
+                            not board.cells[abs_row][abs_col].equals(first_element)):
+                            is_valid = False
+                            break
 
-        return matches
+                    if is_valid:
+                        found_matches.append(Match(
+                            name=pattern.name,
+                            origin=candidate_origin,
+                            width=pattern.width,
+                            height=pattern.height,
+                            pattern=pattern.pattern
+                        ))
+
+        return found_matches
     
     @staticmethod
-    def remove_matches(current_state: BoardState, matches: list[Match]) -> BoardState:
+    def remove_matches(board_state: BoardState, matches: list[Match]) -> BoardState:
+        """
+        Remove matched elements from the board and calculate score
+        
+        Args:
+            board_state: Current board state
+            matches: List of matches to remove
+            
+        Returns:
+            New BoardState with removed matches and updated score
+        """
         if not matches:
-            return current_state
-
-        # Step 1: Mark cells for removal
-        marked_cells = Game.mark_cells_for_removal(current_state.board, matches)
-
-        # Step 2: Apply gravity
-        gravity_applied_cells = Game.apply_gravity(marked_cells, current_state.board.size)
-
-        # Step 3: Calculate score
-        removed_count = sum(match.length for match in matches)
-        new_score = current_state.score + Game.calculate_score(removed_count)
-
-        # Create new board with updated cells
-        new_board = Board(current_state.board.size)
-        new_board.cells = gravity_applied_cells
-
-        # Return NEW state
-        return BoardState(new_board, new_score)
+            return board_state
+            
+        # Clone the board
+        board = Game.clone_board(board_state.board)
+        
+        # Track removed elements for score
+        removed_count = 0
+        
+        # Process all matches
+        for match in matches:
+            for position in match.get_absolute_positions():
+                # Validate position is within bounds
+                if (0 <= position.row < board.size and 
+                    0 <= position.col < board.size):
+                    board.cells[position.row][position.col] = Element(Element.EMPTY)
+                    removed_count += 1
+                    
+        # Calculate new score (10 points per removed element)
+        new_score = board_state.score + (removed_count * 10)
+        
+        return BoardState(board, new_score)
 
     @staticmethod
     def mark_cells_for_removal(board: Board, matches: list[Match]) -> list[list[Element]]:
@@ -220,24 +268,40 @@ class Game:
         return new_cells
 
     @staticmethod
-    def apply_gravity(cells: list[list[Element]], size: int) -> list[list[Element]]:
-        # Initialize new empty cells
-        new_cells = []
-        for _ in range(size):
-            row = []
-            for _ in range(size):
-                row.append(Element(Element.EMPTY))
-            new_cells.append(row)
-
-        # Apply gravity column by column
-        for col in range(size):
-            new_row = size - 1
-            for row in range(size - 1, -1, -1):
-                if cells[row][col].symbol != Element.EMPTY:
-                    new_cells[new_row][col] = cells[row][col]
-                    new_row -= 1
-
-        return new_cells
+    def apply_gravity(board_state: BoardState) -> BoardState:
+        """
+        Apply gravity to make elements fall down into empty spaces
+        
+        Args:
+            board_state: Current board state
+            
+        Returns:
+            New BoardState with elements fallen down
+        """
+        board = Game.clone_board(board_state.board)
+        
+        # Process each column separately
+        for col in range(board.size):
+            # Find all non-empty elements in this column
+            non_empty_elements = []
+            
+            # Collect all non-empty elements from top to bottom
+            for row in range(board.size):
+                if not board.cells[row][col].is_empty():
+                    non_empty_elements.append(board.cells[row][col])
+            
+            # Calculate number of empty spaces at top
+            empty_count = board.size - len(non_empty_elements)
+            
+            # Fill top rows with empty elements
+            for row in range(empty_count):
+                board.cells[row][col] = Element(Element.EMPTY)
+                
+            # Fill bottom rows with non-empty elements
+            for row in range(empty_count, board.size):
+                board.cells[row][col] = non_empty_elements[row - empty_count]
+        
+        return BoardState(board, board_state.score)
 
     @staticmethod
     def calculate_score(removed_count: int) -> int:
@@ -274,13 +338,15 @@ class Game:
         return BoardState(new_board, current_state.score)
     
     def process_cascade(bs: BoardState) -> BoardState:
-        matches = Game.find_matches(bs.board)
+        matches = Game.find_matches(bs, Game.generate_level_matches())
         if not matches:
             return bs
 
         return Game.pipe(
             bs,
             lambda bs: Game.remove_matches(bs, matches),
+            lambda bs: Game.draw(bs, DEBUG),
+            lambda bs: Game.apply_gravity(bs),
             lambda bs: Game.draw(bs, DEBUG),
             lambda bs: Game.fill_empty_spaces(bs, randomizer=Game._randomizer),
             lambda bs: Game.draw(bs, DEBUG),
@@ -291,6 +357,43 @@ class Game:
         for f in funcs:
             value = f(value)
         return value
+
+    @staticmethod
+    def generate_level_matches(level: int) -> list[Match]:
+        """
+        Generate predefined match patterns for a given level
+        
+        Returns:
+            List of Match patterns to check for
+        """
+        # Horizontal three-in-a-row pattern
+        horizontal_match = Match(
+            name="Horizontal three-in-a-row",
+            origin=Position(0, 0),
+            width=3,
+            height=1,
+            pattern=[
+                Position(0, 0),
+                Position(0, 1),
+                Position(0, 2)
+            ]
+        )
+
+        # Vertical three-in-a-row pattern
+        vertical_match = Match(
+            name="Vertical three-in-a-row",
+            origin=Position(0, 0),
+            width=1,
+            height=3,
+            pattern=[
+                Position(0, 0),
+                Position(1, 0),
+                Position(2, 0)
+            ]
+        )
+
+        return [horizontal_match, vertical_match]
+    
 
 def main():
     global DEBUG
