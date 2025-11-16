@@ -1,6 +1,6 @@
 import random
 from enum import Enum
-from typing import List, TypedDict, cast
+from typing import Any, Callable, List, TypedDict, cast
 
 
 # runtime helper — словарь с точечной нотацией
@@ -72,10 +72,21 @@ def create_match(direction: str, row: int, col: int, length: int) -> MatchTD:
     return cast(MatchTD, DotDict(direction=direction, row=row, col=col, length=length))
 
 
+# вспомогательные функции utils
+def pipe(value: Any, *funcs: Callable) -> Any:
+    for f in funcs:
+        value = f(value)
+    return value
+
+
 # игровые функции
 def initialize_game(board_size: int) -> BoardStateTD:
-    board = create_board(board_size)
-    return create_board_state(board)
+    return pipe(
+        create_board(board_size),
+        lambda b: create_board_state(b),
+        lambda bs: fill_empty_spaces(bs),
+        lambda bs: process_cascade(bs),
+    )
 
 
 def draw(bs: BoardStateTD, ask: bool = False) -> BoardStateTD:
