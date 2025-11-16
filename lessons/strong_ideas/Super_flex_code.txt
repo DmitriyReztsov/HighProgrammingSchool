@@ -1,0 +1,46 @@
+1.
+
+from simple_history.models import HistoricalRecords
+
+
+class Invoice(FromIntegrationMixin, SoftDeleteObject):
+    ... поля модели
+
+    history = HistoricalRecords(excluded_fields=["zip_file"], cascade_delete_history=True)
+
+в Джанге есть такой модуль - simple_history. Он записывает в отдельную таблицу все изменения в модели, к которой прикреплен.
+Получается, что HistoricalRecords и есть тот самый свободный объект, лог, по которому можно восстановить состояние объекта Invoice  на любой момент.
+
+2.
+class FieldsLastChanges(models.Model):
+    app_name = models.CharField(max_length=64)
+    model_name = models.CharField(max_length=64)
+    field_name = models.CharField(max_length=64)
+    field_value = models.JSONField()
+    changed_at = models.DateTimeField(auto_now=True, null=True, help_text="When it was last updated [autogen]")
+    changed_by = models.ForeignKey(
+        "user.User",
+        related_name="%(app_label)s_%(class)ss",
+        on_delete=models.CASCADE,
+        null=True,
+        help_text="User who updated field",
+    )
+
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.CharField(max_length=64)  # in case of uuid as object id
+    content_object = GenericForeignKey("content_type", "object_id")
+
+другая реализация той же идеи (только уже самописная) - это учет изменений в отдельных полях объекта модели, в которую внедряется эта модель. Идея в том, чтобы отслеживать при измении любого поля конкретного автора, время изменения и значение поля. Т.е. мы в таком случае храним не весь объек целиком, а только изменения и можем так же по изменениям с учетом времени восстановить состояние объекта на любой момент.
+
+3.
+class Message(MyTimeStampedModel):
+    ...
+    text = models.TextField()
+    ...
+    response_message = models.ForeignKey("Message", null=True, on_delete=models.CASCADE, related_name="response_messages")
+    ...
+
+в модели сообщений есть штамп даты-времени для восстановления хронологии диалога, плюс добавлено поле, ссылающееся на предыдущее сообщение. Получается такой связанный список сообщений, по которому можно восстановить хронолоию общения.
+
+Тогда если бы нам понадобилось ввести свободный объект как отдельную сущность, то он мог бы принять на вход последнее сообщение и восстановить всю цепочку диалога. Единственное, что можно было бы добавить к реализации - это учет операций исправления сообщения.
+
