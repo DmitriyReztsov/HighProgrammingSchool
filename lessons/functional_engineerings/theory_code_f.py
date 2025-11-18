@@ -1,5 +1,6 @@
 import random
 from enum import Enum
+from functools import partial
 from typing import Any, Callable, List, TypedDict, cast
 
 
@@ -108,7 +109,7 @@ def clone_board(board: BoardTD) -> BoardTD:
     for row in range(board.size):
         for col in range(board.size):
             b.cells[row][col] = board.cells[row][col]
-    return
+    return b
 
 
 def read_move(bs: BoardStateTD) -> BoardStateTD:
@@ -137,7 +138,7 @@ def add_match_if_valid(
 ) -> None:
     # Only consider combinations of 3 or more elements
     if length >= 3:
-        matches.append(MatchTD(direction, row, col, length))
+        matches.append(create_match(direction, row, col, length))
 
 
 def find_matches(board: BoardTD) -> list[MatchTD]:
@@ -324,12 +325,11 @@ def fill_empty_spaces(current_state: BoardStateTD) -> BoardStateTD:
 
 
 def process_cascade(bs: BoardStateTD) -> BoardStateTD:
-    matches = find_matches(bs.board)
-    new_bs = remove_matches(bs, matches)
-    if bs is new_bs:
+    new_bs = pipe(bs.board, find_matches, partial(remove_matches, bs))
+    if new_bs == bs:
         return new_bs
-    bs = fill_empty_spaces(new_bs)
-    return process_cascade(bs)
+    
+    return pipe(new_bs, fill_empty_spaces, process_cascade)
 
 
 def game_engine():
@@ -337,13 +337,14 @@ def game_engine():
     global symbols_choice
 
     DEBUG = True
-    symbols_choice: list[str] = ["A", "B", "C", "D", "E", "F"]
+    symbols_choice = ["A", "B", "C", "D", "E", "F"]
     board_size = 8
 
     bs = initialize_game(board_size)
     while True:
         draw(bs)
         bs = read_move(bs)
+        bs = process_cascade(bs)
 
 
 if __name__ == "__main__":
