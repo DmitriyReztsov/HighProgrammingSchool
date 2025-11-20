@@ -325,11 +325,20 @@ def fill_empty_spaces(current_state: BoardStateTD) -> BoardStateTD:
 
 
 def process_cascade(bs: BoardStateTD) -> BoardStateTD:
-    new_bs = pipe(bs.board, find_matches, partial(remove_matches, bs))
-    if new_bs == bs:
-        return new_bs
-    
-    return pipe(new_bs, fill_empty_spaces, process_cascade)
+    matches = find_matches(bs.board)
+    if not matches:
+        return bs
+
+    return pipe(
+        bs,
+        partial(remove_matches, matches=matches),
+        partial(draw, ask=DEBUG),
+        apply_gravity,
+        partial(draw, ask=DEBUG),
+        partial(fill_empty_spaces, randomizer=random),
+        partial(draw, ask=DEBUG),
+        process_cascade
+    )
 
 
 def game_engine():
