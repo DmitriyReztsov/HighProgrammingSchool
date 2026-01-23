@@ -274,6 +274,9 @@ func TestDelete(t *testing.T) {
 	if count != 0 {
 		t.Errorf("Expected list with 0 node, got smth else")
 	}
+	if list.head != nil || list.tail != nil {
+		t.Errorf("Expected list with nil head and tail, got smth else")
+	}
 
 	// list with different nodes like 10 0 10 20 30 ... 120
 	node = &Node{value: 10}

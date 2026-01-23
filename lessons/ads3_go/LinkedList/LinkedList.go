@@ -126,6 +126,7 @@ func (l *LinkedList) Delete(n int, all bool) {
 	// go on with the rest of nodes
 	parent := l.head
 	if parent == nil {
+		l.tail = nil
 		return
 	}
 
