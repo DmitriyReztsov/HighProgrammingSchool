@@ -184,6 +184,6 @@ func (l *LinkedList) InsertFirst(first Node) {
 // time complexity O(1); space complexity O(1)
 func (l *LinkedList) Clean() {
 	l.head = nil
-	l.head = nil
+	l.tail = nil
 }
 

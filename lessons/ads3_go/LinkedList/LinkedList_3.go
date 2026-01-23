@@ -513,11 +513,17 @@ func TestClean(t *testing.T) {
 	if count != 14 {
 		t.Errorf("Expected count 14, got %d", count)
 	}
+	if list.head == nil || list.tail == nil {
+		t.Errorf("Expected NOT nil in had AND tail")
+	}
 
 	list.Clean()
 	count = list.Count()
 	if count != 0 {
 		t.Errorf("Expected count 13, got %d", count)
+	}
+	if list.head != nil || list.tail != nil {
+		t.Errorf("Expected nil in had AND tail")
 	}
 }
 
