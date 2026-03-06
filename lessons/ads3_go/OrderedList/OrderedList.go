@@ -9,34 +9,6 @@ import (
 	"os"
 )
 
-// 7.5 Для реализации концепции класса-генерика в Go сделаем компарато как функцию и будем ее передавать в конструкторе
-// списка. Тогда мы сможем сделать произвольное количество таких функций под разные типы данных.
-// Это и реализет концепцию дженерика.
-type Comparator[T any] func(a, b T) int
-
-func IntComparator(v1, v2 int) int {
-	if v1 < v2 {
-		return -1
-	}
-	if v1 > v2 {
-		return +1
-	}
-	return 0
-}
-
-func StringComparator(v1, v2 string) int {
-	v1 = strings.TrimSpace(v1)
-	v2 = strings.TrimSpace(v2)
-
-	if v1 < v2 {
-		return -1
-	}
-	if v1 > v2 {
-		return +1
-	}
-	return 0
-}
-
 type Node[T constraints.Ordered] struct {
 	prev  *Node[T]
 	next  *Node[T]
@@ -48,23 +20,6 @@ type OrderedList[T constraints.Ordered] struct {
 	tail       *Node[T]
 	_ascending bool
 	compare    Comparator[T]
-	zero       T
-}
-
-// 7.1 реализация дополнительной опции для определения направления упорядочивания. Решил сделать в более декларативном стиле
-func MakeOrderedList[T constraints.Ordered](direction string, cmp Comparator[T]) (*OrderedList[T], error) {
-	var _ascending bool
-
-	switch direction {
-	case "asc":
-		_ascending = true
-	case "desc":
-		_ascending = false
-	default:
-		return nil, errors.New("Wrong value for ordering direction!")
-	}
-
-	return &OrderedList[T]{_ascending: _ascending, compare: cmp}, nil
 }
 
 // Операция посчета стоит нам O(n), что дорого, но условие задачи - не менять сигнатуру и структуру :)
@@ -196,12 +151,62 @@ func (l *OrderedList[T]) Compare(v1 T, v2 T) int {
 	return 0
 }
 
-// 7.5 функция, запускающая проверочную функцию, переданную в конструкторе в рамках создания генерика
 func (l *OrderedList[T]) compareValues(v1, v2 T) int {
-	result := l.compare(v1, v2)
+	var result int
+
+	if l.compare != nil {
+		result = l.compare(v1, v2)
+	} else {
+		result = l.Compare(v1, v2)
+	}
 
 	if l._ascending {
 		return result
 	}
 	return -result
+}
+
+// 7.5 Для реализации концепции класса-генерика в Go сделаем компаратор как функцию и будем ее передавать в конструкторе
+// списка. Тогда мы сможем сделать произвольное количество таких функций под разные типы данных.
+// Это и реализет концепцию дженерика.
+type Comparator[T any] func(a, b T) int
+
+func IntComparator(v1, v2 int) int {
+	if v1 < v2 {
+		return -1
+	}
+	if v1 > v2 {
+		return +1
+	}
+	return 0
+}
+
+func StringComparator(v1, v2 string) int {
+	v1 = strings.TrimSpace(v1)
+	v2 = strings.TrimSpace(v2)
+
+	if v1 < v2 {
+		return -1
+	}
+	if v1 > v2 {
+		return +1
+	}
+	return 0
+}
+
+// 7.1 реализация дополнительной опции для определения направления упорядочивания. Решил сделать в более декларативном стиле
+// 7.5 добавил компаратор
+func MakeOrderedList[T constraints.Ordered](direction string, cmp Comparator[T]) (*OrderedList[T], error) {
+	var _ascending bool
+
+	switch direction {
+	case "asc":
+		_ascending = true
+	case "desc":
+		_ascending = false
+	default:
+		return nil, errors.New("Wrong value for ordering direction!")
+	}
+
+	return &OrderedList[T]{_ascending: _ascending, compare: cmp}, nil
 }

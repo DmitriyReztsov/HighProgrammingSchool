@@ -5,11 +5,8 @@ package main
 import "testing"
 
 func TestAddOLA(t *testing.T) {
-	ol, err := MakeOrderedList[int]("asc", IntComparator)
+	ol := OrderedList[int]{_ascending: true}
 
-	if err != nil {
-		t.Fatal("nil errors expected")
-	}
 	if ol.Count() != 0 {
 		t.Fatalf("0 elements")
 	}
@@ -101,11 +98,8 @@ func TestAddOLA(t *testing.T) {
 }
 
 func TestAddOLD(t *testing.T) {
-	ol, err := MakeOrderedList[int]("desc", IntComparator)
+	ol := OrderedList[int]{_ascending: false}
 
-	if err != nil {
-		t.Fatal("nil errors expected")
-	}
 	if ol.Count() != 0 {
 		t.Fatalf("0 elements")
 	}
@@ -197,7 +191,7 @@ func TestAddOLD(t *testing.T) {
 }
 
 func TestDeleteOLA(t *testing.T) {
-	ol, _ := MakeOrderedList[int]("asc", IntComparator)
+	ol := OrderedList[int]{_ascending: true}
 
 	ol.Add(1)
 	ol.Add(1)
@@ -361,7 +355,7 @@ func TestDeleteOLA(t *testing.T) {
 }
 
 func TestDeleteOLD(t *testing.T) {
-	ol, _ := MakeOrderedList[int]("desc", IntComparator)
+	ol := OrderedList[int]{_ascending: false}
 
 	ol.Add(1)
 	ol.Add(5)
