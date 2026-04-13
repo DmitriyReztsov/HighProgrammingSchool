@@ -10,21 +10,20 @@ import (
 // При таком подходе вероятность ложно положительного срабатывания увеличивается
 func Merge(filters []*BloomFilter) *BloomFilter {
 	if len(filters) == 0 {
-		return &BloomFilter{filterLen: 32, bitArray: 0}
+		bf := Init(32)
+		return &bf
 	}
 
 	// Создаём новый фильтр с параметрами первого
-	merged := &BloomFilter{
-		filterLen: filters[0].filterLen,
-		bitArray:  0,
-	}
+	merged := Init(32)
+	merged.filter_len = filters[0].filter_len
 
 	// Объединяем все битовые массивы через ИЛИ
 	for _, bf := range filters {
-		merged.bitArray |= bf.bitArray
+		merged.filter_len |= bf.filter_len
 	}
 
-	return merged
+	return &merged
 }
 
 // 11.3  фильтр Блюма, предусматривающий удаление элементов

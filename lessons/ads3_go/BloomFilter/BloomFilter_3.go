@@ -17,7 +17,7 @@ func rotations(s string) []string {
 }
 
 func TestBloomFilterAdd(t *testing.T) {
-	bf := BloomFilter{filterLen: 32, bitArray: 0}
+	bf := Init(32)
 
 	values := rotations("0123456789")
 
@@ -43,8 +43,8 @@ func TestBloomFilterAdd(t *testing.T) {
 }
 
 func TestMergeBloomFilters(t *testing.T) {
-	bf1 := &BloomFilter{filterLen: 32, bitArray: 0}
-	bf2 := &BloomFilter{filterLen: 32, bitArray: 0}
+	bf1 := Init(32)
+	bf2 := Init(32)
 
 	bf1.Add("0123456789")
 	bf1.Add("1234567890")
@@ -59,7 +59,7 @@ func TestMergeBloomFilters(t *testing.T) {
 		t.Fatalf("Filter 2 should contain 8901234567")
 	}
 
-	merged := Merge([]*BloomFilter{bf1, bf2})
+	merged := Merge([]*BloomFilter{&bf1, &bf2})
 
 	if !merged.IsValue("0123456789") {
 		t.Fatalf("Merged should contain 0123456789 from filter 1")
