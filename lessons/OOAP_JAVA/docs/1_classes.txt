@@ -1,0 +1,148 @@
+1. 
+1.1. Игра Цивилизация. Там могут быть классы:
+    Клетка:
+        Количество золота
+        Количество культуры
+        Количество работы
+        Наполнение клетки (дорога, тип рельефа)
+        Занятость клетки
+
+    Юнит:
+        Сила
+        Тип (дальнего / ближнего боя)
+        Расстояние боя
+        Очки перемещения
+        Повышения юнита
+        Специальные возможности
+
+    Здание:
+        Стоимость здания в золоте
+        Стоимость здания в работе
+        Затраты на содержание
+        Количество золота
+        Количество культуры
+        Количество работы
+
+
+1.2. Телеграмм.
+    Сообщение:
+        Текст
+        Файл
+        Тип Файла
+        Дата создания
+        Дата изменения
+        Дата удаления
+        Видимость
+        Автор
+
+    Чат:
+        Создатель
+        Связь с группой
+        Связь с сообщениями
+        Доступы к чату
+
+
+2. Классы из Цивилизации
+class Cell {
+  int gold;
+  int culture;
+  int work;
+  String relief;
+  boolean isLocked;
+  String resource;
+}
+
+
+class Unit {
+  String name;
+  int power;
+  String type;  
+  int movePoint;  
+  int bonus;
+  Cell currentCell;
+}
+
+
+class Building {
+  String name;
+  int costGold;
+  int costWork;  
+  int costMaintenance;  
+  int bonusGold;
+  int bonusWork;
+  int bonusCulture;
+}
+
+3.
+class Cell {
+  int gold;
+  int culture;
+  int work;
+  String relief;
+  boolean isLocked;
+  String resource;
+
+  public Cell(int gold, int culture, int work, String relief, boolean isLocked, String resource) {
+    this.gold = gold;
+    this.culture = culture;
+    this.work = work;
+    this.relief = relief;
+    this.isLocked = isLocked;
+    this.resource = resource;
+  }
+}
+
+class Unit {
+  String name;
+  int power;
+  String type;  
+  int movePoint;  
+  int bonus;
+  Cell currentCell;
+  
+  public Unit(String name, int power, String type, int movePoint, int bonus, Cell currentCell) {
+    this.name = name;
+    this.power = power;
+    this.type = type;  
+    this.movePoint = movePoint;  
+    this.bonus = bonus;
+    this.currentCell = currentCell;
+  }
+}
+
+public class MainClass {
+  public static void main(String[] args) {
+    Cell cell1 = new Cell(
+      1,
+      1,
+      1,
+      "plain",
+      false,
+      null
+    );
+    Cell cell2 = new Cell(
+      1,
+      1,
+      1,
+      "forest",
+      false,
+      null
+    );
+    
+    Unit unit1 = new Unit(
+      "worker",
+      0,
+      "not-combat",
+      5,
+      0,
+      cell1
+    );
+    Unit unit2 = unit1;  // создаем второго рабочего, копируем ссылку, а не значения
+    
+    // первый рабочий делает ход
+    unit1.currentCell = cell2;
+    
+    // проверяем второго рабочего - а он тоже переместился!
+    System.out.println("Second worker on cell " + unit2.currentCell.relief);
+  }
+}
