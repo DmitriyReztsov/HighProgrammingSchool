@@ -1,0 +1,76 @@
+class Cell {
+  int gold;
+  int culture;
+  int work;
+  String relief;
+  boolean isLocked;
+  String resource;
+  Approvement approvement;
+
+  void transform(int progress, String approvement) {
+    if (progress != 100) {
+        return;
+    }
+
+    this.approvement.complete();
+    String newObject = this.approvement.picture;
+    this.drawNewState(newObject);
+
+    this.gold = this.gold + this.approvement.bonus;
+    this.work += this.approvement.bonus;
+    this.culture += this/approvement.bonus;
+    ...
+  }
+
+  void drawNewState(String newObject) {
+    ...  // отрисовываем новое состояние клетки
+  }
+
+  int getGold() {
+    return this.gold
+  }
+  ... // гет-методы для остальных ресурсов
+}
+
+
+class Unit {
+  String name;
+  int power;
+  String type;  
+  int movePoint;  
+  int bonus;
+  Cell currentCell;
+  Cell toCell;
+
+  void move(Cell toCell) {
+    this.toCell = toCell;
+    this.currentCell = this.calculateCell();
+  }
+
+  Cell calculateCell() {
+    ... // рассчет текущей клетки с учетом this.movePoint, this.toCell
+  }
+}
+
+
+class Building {
+  String name;
+  int costGold;
+  int costWork;  
+  int costMaintenance;  
+  int bonusGold;
+  int bonusWork;
+  int bonusCulture;
+  int employees;
+
+  void calculateBonuses() {
+    this.bonusGold = ...;
+    this.bonusWork = ...;
+    this.bonusCulture = ...;
+  }
+
+  int getGold() {
+    return this.gold
+  }
+  ... // гет-методы для остальных ресурсов
+}
