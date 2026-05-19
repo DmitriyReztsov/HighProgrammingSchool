@@ -1,0 +1,147 @@
+class Cell {
+  // после инициализации характиристики клетки менять нельзя, только через методы улучшения
+  protected int gold;
+  protected int culture;
+  protected int work;
+  protected String relief;
+  protected String resource;  
+
+  boolean isLocked;
+  Approvement approvement;
+
+  public Cell(int gold, int culture, int work, int relief, int resource) {
+    this.gold = gold;
+    this.culture = culture;
+    this.work = work;
+    this.relief = relief;
+    this.resource = resource;
+  }
+
+  public void transform(int progress, String approvement) {
+    if (progress != 100) {
+        return;
+    }
+
+    this.approvement.complete();
+    String newObject = this.approvement.picture;
+    this.drawNewState(newObject);
+
+    this.gold = this.gold + this.approvement.bonus;
+    this.work += this.approvement.bonus;
+    this.culture += this/approvement.bonus;
+    ...
+  }
+
+  protected void drawNewState(String newObject) {
+    ...  // отрисовываем новое состояние клетки, метод защищенный - извне нет смысла его вызывать без других действий над клеткой
+  }
+
+  public int getGold() {
+    return this.gold
+  }
+  ... // гет-методы для остальных ресурсов
+}
+
+
+class WonderOfTheWorld extends Cell {
+  protected String uniquePicturePath;
+
+  public WonderOfTheWorld(String picPath) {
+    gold = ... // получаем значения для инита из справочника по имени чуда света;
+    ...
+    super(gold, culture, work, relief, resource);
+    this.isLocked = true;  // клетки с чудесами света не доступны для хода и изменений
+  }
+}
+
+
+class Unit {
+  protected String name;
+  protected int power;
+  protected String type;  
+  protected int movePoint;  
+  protected int bonus;
+  protected Cell currentCell;
+  protected Cell toCell;
+  protected List<String> improvements;
+
+  public Unit(String name) {
+    this.name = name;
+    this.power = ... // справочник со стартовыми настройками юнита по его имени
+    this.currentCell = ... // метод, формирующий стартовую точку
+  }
+
+  public void move(Cell toCell) {
+    this.toCell = toCell;
+    this.currentCell = this.calculateCell();
+  }
+
+  protected Cell calculateCell() {
+    ... // рассчет текущей клетки с учетом this.movePoint, this.toCell
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public void setImprovement(String newImprovement) {
+    this.improvements.add(newImprovement);
+    ... // рассчет логики добавочной мощи после улучшения
+    this.setPower(addPower);
+  }
+
+  protected void setPower(int addPower) {
+    this.power += addPower;
+  }
+
+  public String getName() {
+    return this.name;
+  }
+
+  public int getPower() {
+    return this.power;
+  }
+
+  public int calculateDamage() {
+    ... // рассчет наносимого урона в бою
+  }
+}
+
+
+class Worker extends Unit {
+  public Worker() {
+    super("worker");
+  }
+
+  public int calculateDamage() {
+    return 0;
+  }
+}
+
+
+class Building {
+  protected String name;
+  protected int costGold;
+  protected int costWork;  
+  protected int costMaintenance;  
+  protected int bonusGold;
+  protected int bonusWork;
+  protected int bonusCulture;
+  protected int employees;
+
+  public Building(String name) {
+    this.name = name;
+    this.costGold = ... // некий справочник, словарь, где будут описаны начальные условия для зданий по их имени
+  }
+
+  protected void calculateBonuses() {
+    this.bonusGold = ...;
+    this.bonusWork = ...;
+    this.bonusCulture = ...;
+  }
+
+  public int getGold() {
+    return this.gold
+  }
+  ... // гет-методы для остальных ресурсов
+}
