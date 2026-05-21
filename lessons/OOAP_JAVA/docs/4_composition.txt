@@ -1,0 +1,336 @@
+// Введем класс клетки игрового поля такой, что игровая клетка у нас будет состоять из композиции
+// разных объектов: отдельный объект для базовой клетки, отдельный объект для построенного на ней улучшения,
+// отдельный объект для юнита на клетке.
+// Комбинация этих трех объектов будет давать игровой клетке свои очки защиты, доступности и ресурсов.
+
+class Cell {
+  // после инициализации характиристики клетки менять нельзя, только через методы улучшения
+  protected int coordinate;
+
+  protected int gold;
+  protected int culture;
+  protected int work;
+  protected String relief;
+  protected String resource;  
+
+  public Cell(int coordinate, int gold, int culture, int work, String relief, String resource) {
+    this.coordinate = coordinate;
+    this.gold = gold;
+    this.culture = culture;
+    this.work = work;
+    this.relief = relief;
+    this.resource = resource;
+  }
+
+  public void transform(int progress, String approvement) {
+    if (progress != 100) {
+        return;
+    }
+
+    this.approvement.complete();
+    String newObject = this.approvement.picture;
+    this.drawNewState(newObject);
+
+    this.gold = this.gold + this.approvement.bonus;
+    this.work += this.approvement.bonus;
+    this.culture += this/approvement.bonus;
+    ...
+  }
+
+  protected void drawNewState(String newObject) {
+    ...  // отрисовываем новое состояние клетки, метод защищенный - извне нет смысла его вызывать без других действий над клеткой
+  }
+
+  public int getGold() {
+    return this.gold
+  }
+  ... // гет-методы для остальных ресурсов
+}
+
+
+class WonderOfTheWorld extends Cell {
+  protected String uniquePicturePath;
+
+  public WonderOfTheWorld(String picPath) {
+    gold = ... // получаем значения для инита из справочника по имени чуда света;
+    ...
+    super(gold, culture, work, relief, resource);
+    this.isLocked = true;  // клетки с чудесами света не доступны для хода и изменений
+  }
+}
+
+
+class CellConstruction {
+  protected String type;
+  protected int additionalGold;
+  protected int additionalWork;
+  protected int additionalCulture;
+  protected int additionalDefense;
+  protected int defensePoint;
+
+  public CellConstruction(String type) {
+    this.type = type;
+    // заполнение остальных поле по справочнику
+  }
+}
+
+
+// класс игровой клетки (клетки поля), которая реализует композицию из трех объектов
+class FieldCell {
+  protected Cell baseCell;
+  protected CellConstruction construction;
+  protected Unit occupiedByUnit;
+  
+  boolean isLocked;
+
+  public FieldCell(Cell baseCell, CellConstruction construction, Unit occupiedByUnit) {
+    this.baseCell = baseCell;
+    this.construction = construction;
+    this.occupiedByUnit = occupiedByUnit;
+  }
+
+  public int getDefensePoint() {
+    return this.construction.getDefensePoint() + this.baseCell.getDefensePoint() + this.occupiedByUnit.getDefensePoint();
+  }
+}
+
+
+class Unit {
+  protected String name;
+  protected int power;
+  protected String type;  
+  protected int movePoint;  
+  protected int bonus;
+  protected Cell currentCell;
+  protected Cell toCell;
+  protected List<String> improvements;
+
+  public Unit(String name) {
+    this.name = name;
+    this.power = ... // справочник со стартовыми настройками юнита по его имени
+    this.currentCell = ... // метод, формирующий стартовую точку
+  }
+
+  public void move(Cell toCell) {
+    this.toCell = toCell;
+    this.currentCell = this.calculateCell();
+  }
+
+  protected Cell calculateCell() {
+    ... // рассчет текущей клетки с учетом this.movePoint, this.toCell
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public void setImprovement(String newImprovement) {
+    this.improvements.add(newImprovement);
+    ... // рассчет логики добавочной мощи после улучшения
+    this.setPower(addPower);
+  }
+
+  protected void setPower(int addPower) {
+    this.power += addPower;
+  }
+
+  public String getName() {
+    return this.name;
+  }
+
+  public int getPower() {
+    // рассчет очов нападения
+    return this.power;
+  }
+
+  public int getDefensePoint() {
+    // рассчет очков защиты
+    return this.power
+  }
+
+  public int calculateDamage() {
+    return 0; // рассчет наносимого урона в бою
+  }
+}
+
+
+class Worker extends Unit {
+  public Worker() {
+    super("worker");
+  }
+
+  public int calculateDamage() {
+    return 0;
+  }
+}
+
+
+class SwordsMan extends Unit {
+  public Worker() {
+    super("swordsman");
+  }
+
+  protected attackCell(FieldCell fieldCell) {
+    if this.getPower() > fieldCell.occupiedByUnit.getDefensePoint() {
+        // движение
+    } остальная логика 
+  }
+
+  public moveToCell(FieldCell fieldCell) {
+    if (fieldCell.isLocked) {
+        this.attackCell(fieldCell);
+    }
+  }
+}
+
+
+class Building {
+  protected String name;
+  protected int costGold;
+  protected int costWork;  
+  protected int costMaintenance;  
+  protected int bonusGold;
+  protected int bonusWork;
+  protected int bonusCulture;
+  protected int employees;
+
+  public Building(String name) {
+    this.name = name;
+    this.costGold = ... // некий справочник, словарь, где будут описаны начальные условия для зданий по их имени
+  }
+
+  protected void calculateBonuses() {
+    this.bonusGold = ...;
+    this.bonusWork = ...;
+    this.bonusCulture = ...;
+  }
+
+  public int getGold() {
+    return this.gold
+  }
+  ... // гет-методы для остальных ресурсов
+}
+
+
+// 4.1. пример использования для понимания композиции
+SwordsMan redSM = new SwordsMan();
+SwordsMan blueSM = new SwordsMan();
+
+Cell cellRed = new Cell(10, 1, 1, 1, "plain", Null);
+Cell cellBlue = new Cell(11, 1, 1, 1, "plain", Null);
+
+CellConstruction cellConstructionRed = new CellConstruction("fortress);
+
+FieldCell fieldCellRed = new FieldCell(cellRed, cellConstructionRed, redSM);
+FieldCell fieldCellBlue = new FieldCell(cellBlue, Null, blueSM);
+
+blueSM.moveToCell(fieldCellRed);  // при расчете очков защиты учтутся все очки объектов, составляющих FieldCell
+
+
+4.2 
+import java.util.Random;
+
+class Unit {
+    protected String name;
+
+    public Unit(String name) {
+        this.name = name;
+    }
+
+    public void printName() {
+        System.out.println("class Unit " + this.name);
+    }
+}
+
+class Worker extends Unit {
+
+    public Worker() {
+        super("worker");
+    }
+
+    public void printName() {
+        System.out.println("class Worker " + this.name);
+    }
+}
+
+class SwordsMan extends Unit {
+
+    public SwordsMan() {
+        super("swordsman");
+    }
+
+    public void printName() {
+        System.out.println("class SwordsMan " + this.name);
+    }
+}
+
+public class MainClass {
+
+    public static void main(String[] args) {
+
+        Unit[] units = new Unit[500];
+
+        Random random = new Random();
+
+        for (int i = 0; i < units.length; i++) {
+
+            if (random.nextBoolean()) {
+                units[i] = new Worker();
+            } else {
+                units[i] = new SwordsMan();
+            }
+        }
+
+        for (Unit unit : units) {
+            unit.printName();
+        }
+    }
+}
+
+class SwordsMan swordsman
+class SwordsMan swordsman
+class SwordsMan swordsman
+class Worker worker
+class Worker worker
+class Worker worker
+class SwordsMan swordsman
+class SwordsMan swordsman
+class Worker worker
+class Worker worker
+...
+
+// вывод получился из-за полиморфизма, когда вызывается метод, принадлежащий классу, к которому принадлежит объект
+
+4.3 ad-hoc полиморфизм. В Java реализуется через перегрузку методов
+class SwordsMan extends Unit {
+
+    public SwordsMan() {
+        super("swordsman");
+    }
+
+    public void attack(int damage) {
+        System.out.println("Attack with sword. Damage: " + damage);
+    }
+
+    public void attack(int damage, int bonus) {
+        System.out.println("Attack with bonus. Damage: " + (damage + bonus));
+    }
+
+    public void attack(String target) {
+        System.out.println("Attack target: " + target);
+    }
+}
+
+public class MainClass {
+	
+  public static void main(String[] args) {
+    SwordsMan sm = new SwordsMan();
+    sm.attack(50);
+    sm.attack(75, 5);
+    sm.attack("Dragon");
+  }
+}
+
+Attack with sword. Damage: 50
+Attack with bonus. Damage: 80
+Attack target: Dragon
